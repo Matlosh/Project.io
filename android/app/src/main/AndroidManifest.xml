@@ -26,7 +26,6 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
         <data android:scheme="com.anonymous.projectio"/>
-        <data android:scheme="exp+project-io"/>
       </intent-filter>
     </activity>
   </application>
