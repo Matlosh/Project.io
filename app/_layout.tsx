@@ -1,15 +1,16 @@
 import '~/global.css';
 
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
 import { Platform } from 'react-native';
 import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { PortalHost } from '@rn-primitives/portal';
-import { ThemeToggle } from '~/components/ThemeToggle';
 import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
+import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
+import { migrateDbIfNeeded } from '~/lib/database';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -39,6 +40,7 @@ export default function RootLayout() {
       // Adds the background color to the html element to prevent white background on overscroll.
       document.documentElement.classList.add('bg-background');
     }
+
     setAndroidNavigationBar(colorScheme);
     setIsColorSchemeLoaded(true);
     hasMounted.current = true;
@@ -50,17 +52,19 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-      <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-      <Stack>
-        <Stack.Screen
-          name='index'
-          options={{
-            title: 'Starter Base',
-            headerRight: () => <ThemeToggle />,
-          }}
-        />
-      </Stack>
-      <PortalHost />
+      <SQLiteProvider databaseName='project_io.db' onInit={migrateDbIfNeeded}>
+        <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
+        <Stack>
+          <Stack.Screen
+            name='(tabs)'
+            options={{
+              title: 'Project.io',
+              headerShown: false
+            }}
+          />
+        </Stack>
+        <PortalHost />
+      </SQLiteProvider>
     </ThemeProvider>
   );
 }
