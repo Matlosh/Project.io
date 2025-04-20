@@ -1,3 +1,17 @@
+export type Theme_Color_Options = {
+  background: string,
+  border: string,
+  card: string,
+  notification: string,
+  primary: string,
+  text: string
+};
+
+export type Theme_Colors = {
+  light: Theme_Color_Options,
+  dark: Theme_Color_Options
+};
+
 export const NAV_THEME = {
   light: {
     background: 'hsl(0 0% 100%)', // background

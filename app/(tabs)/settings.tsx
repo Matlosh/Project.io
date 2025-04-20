@@ -6,6 +6,8 @@ import { Text } from "~/components/ui/text";
 export default function Settings() {
   return (
     <PageWrapper>
+      <Text className="text-xl font-bold">Settings</Text>
+
       <Accordion
         type="multiple"
         collapsable

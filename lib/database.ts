@@ -1,6 +1,41 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { DATABASE_VERSION } from "./constants";
 
+export type Setting = {
+  id: number,
+  key: string,
+  value: string
+};
+
+export type Project = {
+  id: number,
+  title: string,
+  color: string 
+};
+
+export type Category = {
+  id: number,
+  project_id: number,
+  color: string
+};
+
+export type Task = {
+  id: number,
+  category_id: number,
+  title: string,
+  description: string,
+  until: number,
+  important: number
+};
+
+export type Todo = {
+  id: number,
+  task_id: number,
+  title: string,
+  description: string,
+  done: number
+};
+
 async function setDefaultSettings(db: SQLiteDatabase) {
   const defaultSettings = {
     'colorScheme': 'dark' 

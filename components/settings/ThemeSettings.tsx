@@ -1,7 +1,7 @@
 import { View } from "react-native";
 import { Text } from "../ui/text";
 import { Switch } from "../ui/switch";
-import { useColorScheme } from "~/lib/useColorScheme";
+import { useColorScheme } from "~/hooks/useColorScheme";
 import { setAndroidNavigationBar } from "~/lib/android-navigation-bar";
 import { useSQLiteContext } from "expo-sqlite";
 

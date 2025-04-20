@@ -4,7 +4,7 @@ import { useLayoutEffect } from "react";
 import { Home } from "~/lib/icons/Home";
 import { Rows3 } from "~/lib/icons/Rows3";
 import { Settings } from "~/lib/icons/Settings";
-import { useColorScheme } from "~/lib/useColorScheme";
+import { useColorScheme } from "~/hooks/useColorScheme";
 
 export default function TabsLayout() {
   const db = useSQLiteContext();
@@ -34,7 +34,7 @@ export default function TabsLayout() {
         }}/>
 
       <Tabs.Screen 
-        name="projects"
+        name="(projects)"
         options={{
           title: 'Projects',
           headerShown: false,
