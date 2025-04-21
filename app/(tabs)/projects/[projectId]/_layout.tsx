@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-export default function ProjectsLayout() {
+export default function ProjectsIdLayout() {
   return (
     <Stack>
       <Stack.Screen
@@ -11,9 +11,16 @@ export default function ProjectsLayout() {
       />
 
       <Stack.Screen
-        name='create-project'
+        name='categories'
         options={{
-          title: 'Create new project'
+          headerShown: false
+        }}
+      />
+
+      <Stack.Screen
+        name='tasks'
+        options={{
+          headerShown: false
         }}
       />
     </Stack>

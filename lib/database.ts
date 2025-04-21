@@ -16,6 +16,7 @@ export type Project = {
 export type Category = {
   id: number,
   project_id: number,
+  title: string,
   color: string
 };
 
@@ -62,7 +63,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       await db.execAsync(`
         CREATE TABLE settings (id INTEGER PRIMARY KEY NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, UNIQUE(key));
         CREATE TABLE projects (id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, color TEXT);
-        CREATE TABLE categories (id INTEGER PRIMARY KEY NOT NULL, project_id INTEGER NOT NULL, color TEXT, FOREIGN KEY(project_id) REFERENCES projects(id));
+        CREATE TABLE categories (id INTEGER PRIMARY KEY NOT NULL, project_id INTEGER NOT NULL, title TEXT NOT NULL, color TEXT, FOREIGN KEY(project_id) REFERENCES projects(id));
         CREATE TABLE tasks (id INTEGER PRIMARY KEY NOT NULL, category_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT, until INTEGER, important INTEGER DEFAULT 0, FOREIGN KEY(category_id) REFERENCES categories(id));
         CREATE TABLE todos (id INTEGER PRIMARY KEY NOT NULL, task_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT, done INTEGER DEFAULT 0);
       `); 

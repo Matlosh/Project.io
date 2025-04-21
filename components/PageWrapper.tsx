@@ -1,5 +1,6 @@
 import React from "react";
 import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { cn } from "~/lib/utils";
 
 export function PageWrapper({
@@ -11,11 +12,19 @@ export function PageWrapper({
   isTopBarVisible?: boolean,
   className?: string
 }) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View className={cn(
-      'flex-1 justify-start items-start gap-5 p-6 bg-secondary/30',
-      isTopBarVisible ? 'pt-4' : 'pt-12',
-      className.length > 0 && className)}>
+    <View
+      className={cn(
+        'flex-1 justify-start items-start gap-5 bg-secondary/30',
+        className.length > 0 && className)}
+      style={{
+        paddingTop: isTopBarVisible ? 16 : insets.top + 16,
+        paddingRight: insets.right + 24,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left + 24 
+      }}>
       {children && children}
     </View>
   );

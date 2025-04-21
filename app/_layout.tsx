@@ -12,6 +12,7 @@ import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { migrateDbIfNeeded } from '~/lib/database';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -53,21 +54,23 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-      <GestureHandlerRootView>
-        <SQLiteProvider databaseName='project_io.db' onInit={migrateDbIfNeeded}>
-          <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-          <Stack>
-            <Stack.Screen
-              name='(tabs)'
-              options={{
-                title: 'Project.io',
-                headerShown: false
-              }}
-            />
-          </Stack>
-          <PortalHost />
-        </SQLiteProvider>
-      </GestureHandlerRootView>
+      <SafeAreaProvider>
+        <GestureHandlerRootView>
+          <SQLiteProvider databaseName='project_io.db' onInit={migrateDbIfNeeded}>
+            <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
+            <Stack>
+              <Stack.Screen
+                name='(tabs)'
+                options={{
+                  title: 'Project.io',
+                  headerShown: false
+                }}
+              />
+            </Stack>
+            <PortalHost />
+          </SQLiteProvider>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
     </ThemeProvider>
   );
 }

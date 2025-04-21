@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
+import { Pressable } from "react-native";
 import { PageWrapper } from "~/components/PageWrapper";
 import { TopBar } from "~/components/TopBar";
 import { Card, CardHeader, CardTitle } from "~/components/ui/card";
-import { Text } from "~/components/ui/text";
 import { useThemeColor } from "~/hooks/useThemeColor";
 import { Project } from "~/lib/database";
 import { CirclePlus } from "~/lib/icons/CirclePlus";
@@ -29,17 +29,23 @@ export default function Projects() {
       <TopBar
         header="Projects"
         headerRight={<CirclePlus
-          onPress={() => router.push('/create-project')}
+          onPress={() => router.push('/projects/create')}
           color={colorOptions.text} />} />
 
       {projects.map(project => (
-        <Card className="w-full">
-          <CardHeader
-            style={{borderColor: project.color}}
-            className="border-l-2">
-            <CardTitle>{project.title}</CardTitle>
-          </CardHeader>
-        </Card>
+        <Pressable
+          key={project.id}
+          className="w-full"
+          onPress={() => router.push(`/projects/${project.id}`)}>
+          <Card
+            className="w-full">
+            <CardHeader
+              style={{borderColor: project.color}}
+              className="border-l-2">
+              <CardTitle>{project.title}</CardTitle>
+            </CardHeader>
+          </Card>
+        </Pressable>
       ))}
     </PageWrapper>
   );

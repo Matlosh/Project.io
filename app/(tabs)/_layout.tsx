@@ -34,7 +34,7 @@ export default function TabsLayout() {
         }}/>
 
       <Tabs.Screen 
-        name="(projects)"
+        name="projects"
         options={{
           title: 'Projects',
           headerShown: false,

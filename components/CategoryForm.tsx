@@ -12,12 +12,14 @@ import { useColorScheme } from "~/hooks/useColorScheme";
 import { useSQLiteContext } from "expo-sqlite";
 import { useRouter } from "expo-router";
 
-export function ProjectForm({
+export function CategoryForm({
   formType = 'create',
-  projectId = '0'
+  projectId,
+  categoryId = '0' 
 }: {
   formType?: 'create' | 'edit',
-  projectId?: string
+  projectId: string,
+  categoryId?: string
 }) {
   const { colorScheme } = useColorScheme();
   const db = useSQLiteContext();
@@ -55,14 +57,14 @@ export function ProjectForm({
       try {
         if(formType === 'create') {
             await db.runAsync(`
-              INSERT INTO projects (title, color) VALUES(?, ?)
-            `, [fields.title.value, fields.color.value]); 
+              INSERT INTO categories (project_id, title, color) VALUES(?, ?, ?)
+            `, [projectId, fields.title.value, fields.color.value]); 
 
             router.back();
         } else {
             await db.runAsync(`
-              UPDATE projects SET title = ?, color = ? WHERE id = ?
-            `, [fields.title.value, fields.color.value, projectId]); 
+              UPDATE categories SET title = ?, color = ? WHERE id = ?
+            `, [fields.title.value, fields.color.value, categoryId]); 
 
             router.back();
         }
@@ -98,9 +100,9 @@ export function ProjectForm({
         onPress={() => save()}
         className="mt-4">
         {formType === 'create' ?
-          <Text>Create project</Text>
+          <Text>Add category</Text>
           :
-          <Text>Edit project</Text>
+          <Text>Edit category</Text>
         }
       </Button>
 
