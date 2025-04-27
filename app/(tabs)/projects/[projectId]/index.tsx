@@ -1,17 +1,15 @@
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, ToastAndroid, View } from "react-native";
+import { ActivityIndicator, Modal, Platform, ToastAndroid, View } from "react-native";
 import { PageWrapper } from "~/components/PageWrapper";
 import { TopBar } from "~/components/TopBar";
 import { Text } from "~/components/ui/text";
-import { Project } from "~/lib/database";
+import { Category, Project, Task } from "~/lib/database";
 import { showToast } from "~/lib/utils";
 import { CirclePlus } from "~/lib/icons/CirclePlus";
 import { useThemeColor } from "~/hooks/useThemeColor";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
-import Animated, { FadeIn } from "react-native-reanimated";
 
 export default function ProjectPage() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
@@ -19,7 +17,9 @@ export default function ProjectPage() {
   const { colorOptions } = useThemeColor();
   const db = useSQLiteContext();
   const router = useRouter();
-  const [data, setData] = useState<Project | null>(null);
+  const [project, setProject] = useState<Project | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function ProjectPage() {
           router.back();
         }
 
-        setData(data);
+        setProject(data);
         setLoading(false);
       } catch(err) {
         showToast(`Could not fetch project's data.`);
@@ -43,11 +43,24 @@ export default function ProjectPage() {
     })();
   }, []);
 
+  useEffect(() => {
+    if(project !== null) {
+      (async () => {
+        try {
+
+        } catch(err) {
+          showToast(`Cound not fetch project's tasks.`);
+          router.back();
+        }
+      })();
+    }
+  }, [project]);
+
   return (
     <PageWrapper>
       <TopBar
         showArrowBack
-        header={data !== null ? data.title : ''}
+        header={project !== null ? project.title : ''}
         headerRight={
           <DropdownMenu>
             <DropdownMenuTrigger>
@@ -79,9 +92,9 @@ export default function ProjectPage() {
         </View>  
         :
         <>
-         
+
         </>
-    }
+      }
     </PageWrapper>
   );
 }

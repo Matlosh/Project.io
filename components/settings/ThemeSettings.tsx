@@ -22,12 +22,19 @@ export function ThemeSettings() {
   }
 
   return (
-    <View>
+    <View className="flex flex-col gap-4">
       <View className="flex flex-row justify-between">
         <Text>Dark mode</Text>
         <Switch
           checked={isDarkColorScheme}
           onCheckedChange={toggleColorScheme} />
+      </View>
+
+      <View className="flex flex-row justify-between">
+        <Text>24 hour clock</Text>
+        <Switch
+          checked={true}
+          onCheckedChange={() => {}} />
       </View>
     </View>
   );

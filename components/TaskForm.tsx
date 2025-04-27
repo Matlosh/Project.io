@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, View } from "react-native";
-import ColorPicker, { HueSlider, OpacitySlider, Panel1, Preview, Swatches } from "reanimated-color-picker";
 import { Input } from "~/components/ui/input";
 import { Button } from "./ui/button";
 import { Text } from "./ui/text";
@@ -11,27 +10,51 @@ import { useFormInput } from "~/hooks/useFormInput";
 import { useColorScheme } from "~/hooks/useColorScheme";
 import { useSQLiteContext } from "expo-sqlite";
 import { useRouter } from "expo-router";
+import { Category } from "~/lib/database";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select";
+import { Textarea } from "./ui/textarea";
+import { Switch } from "./ui/switch";
+import DatePicker from "react-native-date-picker";
+import { format } from 'date-fns';
 
 export function TaskForm({
+  projectId,
   formType = 'create',
-  categoryId,
   taskId = '0' 
 }: {
+  projectId: string,
   formType?: 'create' | 'edit',
-  categoryId: string,
   taskId?: string
 }) {
-  const { colorScheme } = useColorScheme();
   const db = useSQLiteContext();
   const router = useRouter();
-  const [showColorPickerModal, setShowColorPickerModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const fields = {
     title: useFormInput('', 'title'),
+    categoryId: useFormInput('', 'category_id'),
     description: useFormInput('', 'description'),
+    showUntil: useFormInput(false, 'show_until'),
     until: useFormInput<Date>(new Date(), 'until'),
     important: useFormInput(false, 'important')
   };
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const categories = await db.getAllAsync<Category>(`
+          SELECT * FROM categories WHERE project_id = ?
+        `, [
+          projectId
+        ]);
+        
+        setCategories(categories);
+      } catch(err) {
+        setErrorMessage("Fetching project's categories failed. Please try again.");
+      }
+    })();    
+  }, []);
 
   const validate = (): boolean => {
     let isOkay = true;
@@ -42,8 +65,13 @@ export function TaskForm({
       fieldNames.push(fields.title.name);
     }
 
+    if(Number(fields.categoryId.value) < 1 || Number.isNaN(Number(fields.categoryId.value))) {
+      isOkay = false;
+      fieldNames.push(fields.categoryId.name); 
+    }
+
     if(!isOkay)
-      setErrorMessage(`Please fill all necessary fields: ${fieldNames.join(',')}`);
+      setErrorMessage(`Please fill all necessary fields: ${fieldNames.join(', ')}`);
     return isOkay;
   };
 
@@ -56,7 +84,7 @@ export function TaskForm({
             await db.runAsync(`
               INSERT INTO tasks (category_id, title, description, until, important) VALUES(?, ?, ?, ?, ?)
             `, [
-              categoryId,
+              fields.categoryId.value,
               fields.title.value,
               fields.description.value,
               Math.floor(fields.until.value.getTime() / 1000),
@@ -71,7 +99,8 @@ export function TaskForm({
               fields.title.value,
               fields.description.value,
               Math.floor(fields.until.value.getTime() / 1000),
-              fields.important.value
+              fields.important.value,
+              taskId
             ]); 
 
             router.back();
@@ -85,17 +114,71 @@ export function TaskForm({
   return (
     <View className="w-full flex flex-col gap-4">
       <Label>Title</Label>
-      
       <Input
         placeholder="Title"
         className="w-full"
         value={fields.title.value}
         onChangeText={text => fields.title.setValue(text)}
       />
+      
+      <Label>Category</Label>
+      <Select
+        onValueChange={option => fields.categoryId.setValue(option ? option.value : '')}>
+        <SelectTrigger>
+          <SelectValue
+            className="text-foreground"
+            placeholder="Select a category"
+          />
+        </SelectTrigger>
+        <SelectContent>
+          {categories.map(category => (
+            <SelectItem
+              key={category.id}
+              label={category.title}
+              value={category.id.toString()}
+            />
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Label>Description</Label>
+      <Textarea
+        placeholder="Description..."
+        className="min-h-[200px]"
+        value={fields.description.value}
+        onChangeText={text => fields.description.setValue(text)}
+      />
+
+      <View className="flex flex-row justify-between">
+        <Label>Set until date</Label>
+        <Switch
+          checked={fields.showUntil.value}
+          onCheckedChange={fields.showUntil.setValue} />
+      </View>
+      
+      {fields.showUntil.value &&
+        <View className="flex flex-col gap-4">
+          <Label>Until date</Label>
+          <Text>Task's until date: {format(fields.until.value, "do LLL yyyy, HH:mm")}</Text>
+          <Button
+            onPress={() => {
+              setTimeout(() => {
+                setShowDatePicker(prev => !prev);
+              }, 200);
+            }}><Text>Show date picker</Text></Button>
+        </View>
+      }
+
+      <View className="flex flex-row justify-between">
+        <Label>Mark this task as important?</Label>
+        <Switch
+          checked={fields.important.value}
+          onCheckedChange={fields.important.setValue} />
+      </View>
 
       <Button
         onPress={() => save()}
-        className="mt-4">
+        className="mt-16">
         {formType === 'create' ?
           <Text>Add category</Text>
           :
@@ -105,6 +188,21 @@ export function TaskForm({
 
       {errorMessage.length > 0 &&
         <Text>{errorMessage}</Text>}
+
+      <View>
+        <DatePicker
+          modal
+          open={showDatePicker}
+          date={fields.until.value}
+          onConfirm={(date) => {
+            setShowDatePicker(false);
+            fields.until.setValue(date);
+          }}
+          onCancel={() => {
+            setShowDatePicker(false);
+          }}
+        />
+      </View> 
     </View>
   );
 }

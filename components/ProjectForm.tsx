@@ -107,29 +107,31 @@ export function ProjectForm({
       {errorMessage.length > 0 &&
         <Text>{errorMessage}</Text>}
 
-      <Modal
-        visible={showColorPickerModal}
-        animationType="slide"
-        style={{backgroundColor: NAV_THEME.dark.notification}}>
-        <PageWrapper className="bg-secondary flex flex-col gap-4">
-          <Text className="text-xl font-bold">Pick a color</Text>
+      <View>
+        <Modal
+          visible={showColorPickerModal}
+          animationType="slide"
+          style={{backgroundColor: NAV_THEME.dark.notification}}>
+          <PageWrapper className="bg-secondary flex flex-col gap-4">
+            <Text className="text-xl font-bold">Pick a color</Text>
 
-          <ColorPicker
-            style={{width: '100%'}}
-            value={fields.color.value}
-            onCompleteJS={hex => fields.color.setValue(hex.hex)}>
-            <Preview />
-            <Panel1 />
-            <HueSlider />
-          </ColorPicker>
+            <ColorPicker
+              style={{width: '100%'}}
+              value={fields.color.value}
+              onCompleteJS={hex => fields.color.setValue(hex.hex)}>
+              <Preview />
+              <Panel1 />
+              <HueSlider />
+            </ColorPicker>
 
-          <Button
-            className="w-full"
-            onPress={() => setShowColorPickerModal(false)}>
-            <Text>Save color</Text>
-          </Button>
-        </PageWrapper>
-      </Modal>
+            <Button
+              className="w-full"
+              onPress={() => setShowColorPickerModal(false)}>
+              <Text>Save color</Text>
+            </Button>
+          </PageWrapper>
+        </Modal>
+      </View> 
     </View>
   );
 }
