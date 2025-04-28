@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Modal, Platform, ToastAndroid, View } from "react-native";
+import { ActivityIndicator, Modal, Platform, Pressable, ToastAndroid, View } from "react-native";
 import { PageWrapper } from "~/components/PageWrapper";
 import { TopBar } from "~/components/TopBar";
 import { Text } from "~/components/ui/text";
@@ -10,6 +10,11 @@ import { showToast } from "~/lib/utils";
 import { CirclePlus } from "~/lib/icons/CirclePlus";
 import { useThemeColor } from "~/hooks/useThemeColor";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+
+type ExtendedCategory = Category & {
+  active_tasks_count: number
+};
 
 export default function ProjectPage() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
@@ -18,8 +23,7 @@ export default function ProjectPage() {
   const db = useSQLiteContext();
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [categories, setCategories] = useState<ExtendedCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,9 +51,14 @@ export default function ProjectPage() {
     if(project !== null) {
       (async () => {
         try {
+          const data = await db.getAllAsync<ExtendedCategory>(`
+            SELECT categories.*, (SELECT COUNT(id) FROM tasks WHERE finished = 1 AND category_id = categories.id) AS active_tasks_count FROM categories WHERE project_id = ? 
+          `, [projectId]); 
 
+          setCategories(data);
         } catch(err) {
-          showToast(`Cound not fetch project's tasks.`);
+          console.log(err);
+          showToast(`Cound not fetch project's categories.`);
           router.back();
         }
       })();
@@ -92,7 +101,22 @@ export default function ProjectPage() {
         </View>  
         :
         <>
-
+          {categories.map(category => (
+            <Pressable
+              key={category.id}
+              className="w-full"
+              onPress={() => router.push(`/projects/${projectId}/categories/${category.id}`)}>
+              <Card
+                className="w-full">
+                <CardHeader
+                  style={{borderColor: category.color}}
+                  className="border-l-2">
+                  <CardTitle>{category.title}</CardTitle>
+                  <CardDescription>Active tasks: {category.active_tasks_count}</CardDescription>
+                </CardHeader>
+              </Card>
+            </Pressable>
+          ))}
         </>
       }
     </PageWrapper>
