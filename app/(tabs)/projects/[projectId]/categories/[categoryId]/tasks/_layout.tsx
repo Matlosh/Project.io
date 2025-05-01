@@ -9,6 +9,13 @@ export default function TasksLayout() {
           headerShown: false
         }}
       />
+
+      <Stack.Screen
+        name='[taskId]'
+        options={{
+          headerShown: false
+        }}
+      />
     </Stack>
   );
 }

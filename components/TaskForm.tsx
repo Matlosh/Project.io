@@ -3,15 +3,11 @@ import { Modal, View } from "react-native";
 import { Input } from "~/components/ui/input";
 import { Button } from "./ui/button";
 import { Text } from "./ui/text";
-import { PageWrapper } from "./PageWrapper";
-import { NAV_THEME } from "~/lib/constants";
 import { Label } from "./ui/label";
 import { useFormInput } from "~/hooks/useFormInput";
-import { useColorScheme } from "~/hooks/useColorScheme";
 import { useSQLiteContext } from "expo-sqlite";
 import { useRouter } from "expo-router";
 import { Category } from "~/lib/database";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { Switch } from "./ui/switch";
 import DatePicker from "react-native-date-picker";
@@ -19,10 +15,12 @@ import { format } from 'date-fns';
 
 export function TaskForm({
   projectId,
+  categoryId,
   formType = 'create',
   taskId = '0' 
 }: {
   projectId: string,
+  categoryId: string,
   formType?: 'create' | 'edit',
   taskId?: string
 }) {
@@ -31,7 +29,7 @@ export function TaskForm({
   const [errorMessage, setErrorMessage] = useState('');
   const fields = {
     title: useFormInput('', 'title'),
-    categoryId: useFormInput('', 'category_id'),
+    categoryId: useFormInput(categoryId, 'category_id'),
     description: useFormInput('', 'description'),
     showUntil: useFormInput(false, 'show_until'),
     until: useFormInput<Date>(new Date(), 'until'),
@@ -120,26 +118,6 @@ export function TaskForm({
         value={fields.title.value}
         onChangeText={text => fields.title.setValue(text)}
       />
-      
-      <Label>Category</Label>
-      <Select
-        onValueChange={option => fields.categoryId.setValue(option ? option.value : '')}>
-        <SelectTrigger>
-          <SelectValue
-            className="text-foreground"
-            placeholder="Select a category"
-          />
-        </SelectTrigger>
-        <SelectContent>
-          {categories.map(category => (
-            <SelectItem
-              key={category.id}
-              label={category.title}
-              value={category.id.toString()}
-            />
-          ))}
-        </SelectContent>
-      </Select>
 
       <Label>Description</Label>
       <Textarea

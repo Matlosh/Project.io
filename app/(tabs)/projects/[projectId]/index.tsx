@@ -57,7 +57,6 @@ export default function ProjectPage() {
 
           setCategories(data);
         } catch(err) {
-          console.log(err);
           showToast(`Cound not fetch project's categories.`);
           router.back();
         }
@@ -84,10 +83,6 @@ export default function ProjectPage() {
                 left: 24,
               }}
               className="mt-4">
-              <DropdownMenuItem onPress={() => router.push(`/projects/${projectId}/tasks/create`)}>
-                <Text>Add task</Text>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem onPress={() => router.push(`/projects/${projectId}/categories/create`)}>
                 <Text>Add category</Text>
               </DropdownMenuItem>

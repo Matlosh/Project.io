@@ -4,7 +4,10 @@ import { TaskForm } from "~/components/TaskForm";
 import { TopBar } from "~/components/TopBar";
 
 export default function Create() {
-  const { projectId } = useLocalSearchParams<{ projectId: string }>();
+  const { projectId, categoryId } = useLocalSearchParams<{
+      projectId: string,
+      categoryId: string
+    }>();
 
   return (
     <PageWrapper>
@@ -12,7 +15,9 @@ export default function Create() {
         showArrowBack
         header="Add new task"
       />
-      <TaskForm projectId={projectId} />
+      <TaskForm
+        categoryId={categoryId}
+        projectId={projectId} />
     </PageWrapper>
   );
 }
