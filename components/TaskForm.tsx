@@ -80,11 +80,12 @@ export function TaskForm({
       try {
         if(formType === 'create') {
             await db.runAsync(`
-              INSERT INTO tasks (category_id, title, description, until, important) VALUES(?, ?, ?, ?, ?)
+              INSERT INTO tasks (category_id, title, description, is_until, until, important) VALUES(?, ?, ?, ?, ?, ?)
             `, [
               fields.categoryId.value,
               fields.title.value,
               fields.description.value,
+              fields.showUntil.value,
               Math.floor(fields.until.value.getTime() / 1000),
               fields.important.value
             ]); 
@@ -92,10 +93,11 @@ export function TaskForm({
             router.back();
         } else {
             await db.runAsync(`
-              UPDATE tasks SET title = ?, description = ?, until = ?, important = ? WHERE id = ?
+              UPDATE tasks SET title = ?, description = ?, is_until = ?, until = ?, important = ? WHERE id = ?
             `, [
               fields.title.value,
               fields.description.value,
+              fields.showUntil.value,
               Math.floor(fields.until.value.getTime() / 1000),
               fields.important.value,
               taskId
@@ -156,7 +158,7 @@ export function TaskForm({
 
       <Button
         onPress={() => save()}
-        className="mt-16">
+        className="mt-4">
         {formType === 'create' ?
           <Text>Add category</Text>
           :

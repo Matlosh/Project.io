@@ -11,3 +11,7 @@ export function showToast(message: string) {
     ToastAndroid.show(message, ToastAndroid.SHORT);
   }
 }
+
+export function resetFields(fields: { [key: string]: { reset: () => void }}) {
+  Object.values(fields).forEach(field => field.reset());
+}

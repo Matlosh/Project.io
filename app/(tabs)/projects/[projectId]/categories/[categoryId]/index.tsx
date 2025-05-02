@@ -15,43 +15,14 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { CirclePlus } from "~/lib/icons/CirclePlus";
 import { useThemeColor } from "~/hooks/useThemeColor";
+import { format } from "date-fns";
+import { useDynamicReload } from "~/hooks/useDynamicReload";
+import { UpdateEntry } from "~/components/providers/UpdateProvider";
  
 type TodosInfo = {
   available: number,
   completed: number
 };
-
-function TodoEntry({
-  todo
-}: {
-  todo: Todo
-}) {
-  const [checked, setChecked] = useState(!!todo.done);
-  const db = useSQLiteContext();
-
-  const onCheckedChange = (checked: boolean) => {
-    setChecked(checked);
-
-    (async () => {
-      try {
-        await db.runAsync(`
-          UPDATE todos SET done = ? WHERE task_id = ?
-        `, [+checked, todo.task_id]);
-      } catch(err) {
-        showToast(`Failed to change todo's status.`)
-      }
-    })();
-  };
-
-  return (
-    <View className="flex flex-row gap-2">
-      <Checkbox
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-      />
-    </View>
-  );
-}
 
 function TaskEntry({
   task,
@@ -68,40 +39,69 @@ function TaskEntry({
     available: 0,
     completed: 0
   });
+  const [untilDate, setUntilDate] = useState<Date>(new Date(task.until * 1000)); 
 
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await db.getFirstAsync<TodosInfo>(`
-          SELECT
-          (
-            SELECT COUNT(id) FROM todos WHERE task_id = ?
-          ) AS available,
-          (
-            SELECT COUNT(id) FROM todos WHERE task_id = ? AND done = 1
-          ) AS completed; 
-        `, [task.id, task.id]); 
-
-        if(data !== null) {
-          setTodosInfo(data);
-        } else {
-          showToast(`Failed to fetch task's todo status.`);
-        }
-      } catch(err) {
-        showToast(`Could not fetch "${task.title}"'s data.`);
-      }
-    })();
+    reloadTodosInfo(); 
   }, []);
+
+  useDynamicReload((entries: UpdateEntry[]) => {
+    const todoEntry = entries.find(entry => entry.key === 'todos');
+    const taskEntry = entries.find(entry => entry.key === 'tasks');
+
+    if(todoEntry && taskEntry && taskEntry.values[0] === task.id.toString()) {
+      reloadTodosInfo(); 
+    }
+  }, ['todos', 'tasks']);
+
+  const reloadTodosInfo = async () => {
+    try {
+      const data = await db.getFirstAsync<TodosInfo>(`
+        SELECT
+        (
+          SELECT COUNT(id) FROM todos WHERE task_id = ?
+        ) AS available,
+        (
+          SELECT COUNT(id) FROM todos WHERE task_id = ? AND done = 1
+        ) AS completed; 
+      `, [task.id, task.id]); 
+
+      if(data !== null) {
+        setTodosInfo(data);
+      } else {
+        showToast(`Failed to fetch task's todo status.`);
+      }
+    } catch(err) {
+      showToast(`Could not fetch "${task.title}"'s data.`);
+    }
+  };
 
   return (
     <Pressable
       onLongPress={() => console.log('long press...?')}
       onPress={() => router.push(`/projects/${projectId}/categories/${categoryId}/tasks/${task.id}`)}
       className="w-full">
-      <Card className="w-full">
+      <Card className={cn("w-full", task.important && "border-l-[1px] border-red-500")}>
         <CardHeader>
           <Text className="text-lg font-bold">{task.title}</Text>
-          <CardDescription>Completed: {todosInfo.completed}/{todosInfo.available} ({todosInfo.available > 0 ? todosInfo.completed * 100 / todosInfo.available : 100}%)</CardDescription>
+          <CardDescription>Completed: {todosInfo.completed}/{todosInfo.available} ({todosInfo.available > 0 ? (todosInfo.completed * 100 / todosInfo.available).toFixed(2) : 100}%)</CardDescription>
+          {task.is_until ? 
+            <CardDescription
+              className={cn(untilDate < new Date() && "text-red-500")}>Until: {format(untilDate, 'do LLL yyyy, HH:mm')}</CardDescription>
+            :
+            null
+          }
+          {task.finished ?
+            <CardDescription className="text-red-500">Finished</CardDescription>
+            :
+            null
+          }
+          {todosInfo.available === todosInfo.completed || task.finished ?
+            <CardDescription
+              className="text-green-500">Finished</CardDescription>
+            :
+            null
+          }
         </CardHeader>
       </Card>
     </Pressable>
@@ -140,6 +140,14 @@ export default function CategoryPage() {
     })();
   }, []);
 
+  useDynamicReload((entries: UpdateEntry[]) => {
+    const taskEntry = entries.find(entry => entry.key === 'tasks');
+
+    if(taskEntry) {
+      reloadTask(taskEntry.values[0]);            
+    }
+  }, ['tasks']);
+
   useEffect(() => {
     if(category !== null) {
       (async () => {
@@ -158,31 +166,32 @@ export default function CategoryPage() {
     }
   }, [category]);
 
+  const reloadTask = async (taskId: string) => {
+    try {
+      const data = await db.getFirstAsync<Task>(`
+        SELECT * FROM tasks WHERE id = ?
+      `, [taskId]);
+
+      if(data) {
+        setTasks([
+          ...(tasks.filter(task => task.id.toString() !== taskId)),
+          data
+        ]);
+      }
+    } catch(err) {
+      showToast(`Could not reload task.`);
+    }
+  };
+
   return (
     <PageWrapper>
       <TopBar
         showArrowBack
         header={category !== null ? category.title : ''}
         headerRight={
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <CirclePlus
-                color={colorOptions.text}/>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              insets={{
-                top: 8,
-                right: 24,
-                bottom: 8,
-                left: 24
-              }}
-              className="mt-4">
-              <DropdownMenuItem
-                onPress={() => router.push(`/projects/${projectId}/categories/${categoryId}/tasks/create`)}>
-                <Text>Add new todo</Text>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <CirclePlus
+            onPress={() => router.push(`/projects/${projectId}/categories/${categoryId}/tasks/create`)}
+            color={colorOptions.text}/>
         }
       />
 

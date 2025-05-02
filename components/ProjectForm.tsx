@@ -10,7 +10,7 @@ import { Label } from "./ui/label";
 import { useFormInput } from "~/hooks/useFormInput";
 import { useColorScheme } from "~/hooks/useColorScheme";
 import { useSQLiteContext } from "expo-sqlite";
-import { useRouter } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 
 export function ProjectForm({
   formType = 'create',
@@ -66,6 +66,8 @@ export function ProjectForm({
 
             router.back();
         }
+
+        router.setParams({ update: ['project'], updateValue: [3] })
       } catch(err) {
         setErrorMessage('Saving failed. Please try again.');
       }

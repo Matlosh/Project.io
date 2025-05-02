@@ -25,15 +25,16 @@ export type Task = {
   category_id: number,
   title: string,
   description: string,
+  is_until: number,
   until: number,
-  important: number
+  important: number,
+  finished: number
 };
 
 export type Todo = {
   id: number,
   task_id: number,
   title: string,
-  description: string,
   done: number
 };
 
@@ -65,7 +66,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         CREATE TABLE projects (id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, color TEXT);
         CREATE TABLE categories (id INTEGER PRIMARY KEY NOT NULL, project_id INTEGER NOT NULL, title TEXT NOT NULL, color TEXT, FOREIGN KEY(project_id) REFERENCES projects(id));
         CREATE TABLE tasks (id INTEGER PRIMARY KEY NOT NULL, category_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT, until INTEGER, important INTEGER DEFAULT 0, finished INTEGER DEFAULT 0, FOREIGN KEY(category_id) REFERENCES categories(id));
-        CREATE TABLE todos (id INTEGER PRIMARY KEY NOT NULL, task_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT, done INTEGER DEFAULT 0);
+        CREATE TABLE todos (id INTEGER PRIMARY KEY NOT NULL, task_id INTEGER NOT NULL, title TEXT NOT NULL, done INTEGER DEFAULT 0);
       `); 
 
       currentDbVersion = 1;

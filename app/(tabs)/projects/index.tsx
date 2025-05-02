@@ -1,10 +1,12 @@
-import { useRouter } from "expo-router";
+import { useGlobalSearchParams, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Pressable } from "react-native";
 import { PageWrapper } from "~/components/PageWrapper";
 import { TopBar } from "~/components/TopBar";
+import { UpdateContext } from "~/components/providers/UpdateProvider";
 import { Card, CardHeader, CardTitle } from "~/components/ui/card";
+import { useDynamicReload } from "~/hooks/useDynamicReload";
 import { useThemeColor } from "~/hooks/useThemeColor";
 import { Project } from "~/lib/database";
 import { CirclePlus } from "~/lib/icons/CirclePlus";
@@ -14,6 +16,7 @@ export default function Projects() {
   const db = useSQLiteContext();
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
+  const { reloadEntries } = useDynamicReload();
 
   useEffect(() => {
     (async () => {
@@ -23,6 +26,10 @@ export default function Projects() {
       } catch(err) {}
     })();
   }, []);
+
+  useEffect(() => {
+    console.log('updateEntries', reloadEntries);
+  }, [reloadEntries]);
 
   return (
     <PageWrapper>

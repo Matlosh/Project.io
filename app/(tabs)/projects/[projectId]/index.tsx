@@ -70,24 +70,9 @@ export default function ProjectPage() {
         showArrowBack
         header={project !== null ? project.title : ''}
         headerRight={
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <CirclePlus
-                color={colorOptions.text} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              insets={{
-                top: 8,
-                right: 24,
-                bottom: 8,
-                left: 24,
-              }}
-              className="mt-4">
-              <DropdownMenuItem onPress={() => router.push(`/projects/${projectId}/categories/create`)}>
-                <Text>Add category</Text>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <CirclePlus
+            color={colorOptions.text}
+            onPress={() => router.push(`/projects/${projectId}/categories/create`)} />
         } />
 
       {loading ?

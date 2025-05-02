@@ -16,13 +16,6 @@ export default function ProjectsIdLayout() {
           headerShown: false
         }}
       />
-
-      <Stack.Screen
-        name='tasks'
-        options={{
-          headerShown: false
-        }}
-      />
     </Stack>
   );
 }
