@@ -17,7 +17,7 @@ export function CategoryForm({
   projectId,
   categoryId = '0' 
 }: {
-  formType?: 'create' | 'edit',
+  formType?: 'create' | 'update',
   projectId: string,
   categoryId?: string
 }) {

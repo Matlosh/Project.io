@@ -15,6 +15,8 @@ import { Label } from "~/components/ui/label";
 import { TodoForm } from "~/components/TodoForm";
 import { Trash2 } from "~/lib/icons/Trash2";
 import { useDynamicReload } from "~/hooks/useDynamicReload";
+import { Separator } from "~/components/ui/separator";
+import { format } from "date-fns";
 
 function TodoEntry({
   todo,
@@ -165,12 +167,12 @@ export default function TaskPage() {
         header={task !== null ? task.title : ''}
       />
 
-      {loading ?
+      {loading || task === null ?
         <View className="w-full h-full justify-center items-center">
           <ActivityIndicator size="large" /> 
         </View>  
         :
-        <View className="flex flex-col gap-4">
+        <View className="w-full flex flex-col gap-4">
           {todos.map(todo => (
             <TodoEntry
               key={todo.id}
@@ -184,6 +186,42 @@ export default function TaskPage() {
             taskId={taskId}
             onSave={onTodoSave}
           />
+
+          {task.description.trim().length > 0 ?
+            <View className="flex flex-col gap-4">
+              <Separator
+                orientation="horizontal"
+                className="mt-4 mb-2"
+                style={{backgroundColor: colorOptions.text}} />
+              <Text className="text-lg font-bold">Description</Text>
+              <Text>{task.description}</Text>
+            </View>
+            :
+            null
+          }
+
+          <Separator
+            orientation="horizontal"
+            className="mt-4 mb-2"
+            style={{backgroundColor: colorOptions.text}} />
+
+          <Text className="text-lg font-bold">Information about this task</Text>
+
+          <View className="flex flex-col gap-2">
+            <View className="flex flex-row gap-2 flex-wrap">
+              <Text className="font-bold">Full title:</Text>
+              <Text>{task.title}</Text>
+            </View> 
+
+            {task.is_until ?
+              <View className="flex flex-row gap-2">
+                <Text className="font-bold">Until:</Text>
+                <Text>{format(new Date(task.until * 1000), 'do LLL yyyy, HH:mm')}</Text>
+              </View> 
+              :
+              null
+            }
+          </View>
         </View>
       }
     </PageWrapper>

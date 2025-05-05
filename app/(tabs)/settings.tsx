@@ -20,7 +20,7 @@ export default function Settings() {
             <ThemeSettings />
           </AccordionContent>
         </AccordionItem>
-      </Accordion> 
+      </Accordion>
     </PageWrapper>
   );
 }

@@ -17,7 +17,7 @@ export function TodoForm({
   onSave
 }: {
   taskId: string,
-  formType?: 'create' | 'edit',
+  formType?: 'create' | 'update',
   onSave?: (todo: Todo) => void
 }) {
   const db = useSQLiteContext();

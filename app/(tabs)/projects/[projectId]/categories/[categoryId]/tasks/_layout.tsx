@@ -4,7 +4,7 @@ export default function TasksLayout() {
   return (
     <Stack>
       <Stack.Screen
-        name='create'
+        name='form'
         options={{
           headerShown: false
         }}

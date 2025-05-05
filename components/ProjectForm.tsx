@@ -16,7 +16,7 @@ export function ProjectForm({
   formType = 'create',
   projectId = '0'
 }: {
-  formType?: 'create' | 'edit',
+  formType?: 'create' | 'update',
   projectId?: string
 }) {
   const { colorScheme } = useColorScheme();

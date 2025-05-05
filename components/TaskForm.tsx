@@ -12,6 +12,7 @@ import { Textarea } from "./ui/textarea";
 import { Switch } from "./ui/switch";
 import DatePicker from "react-native-date-picker";
 import { format } from 'date-fns';
+import { useDynamicReload } from "~/hooks/useDynamicReload";
 
 export function TaskForm({
   projectId,
@@ -21,7 +22,7 @@ export function TaskForm({
 }: {
   projectId: string,
   categoryId: string,
-  formType?: 'create' | 'edit',
+  formType?: 'create' | 'update',
   taskId?: string
 }) {
   const db = useSQLiteContext();
@@ -37,6 +38,7 @@ export function TaskForm({
   };
   const [categories, setCategories] = useState<Category[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const { sendDynamicReload } = useDynamicReload();
 
   useEffect(() => {
     (async () => {
@@ -78,8 +80,10 @@ export function TaskForm({
 
     (async () => {
       try {
+        let elementId = -1;
+
         if(formType === 'create') {
-            await db.runAsync(`
+            const result = await db.runAsync(`
               INSERT INTO tasks (category_id, title, description, is_until, until, important) VALUES(?, ?, ?, ?, ?, ?)
             `, [
               fields.categoryId.value,
@@ -90,9 +94,21 @@ export function TaskForm({
               fields.important.value
             ]); 
 
-            router.back();
+            elementId = result.lastInsertRowId;
+            sendDynamicReload([
+              {
+                key: 'tasks',
+                state: 'create',
+                values: [elementId.toString()]
+              },
+              {
+                key: 'categories',
+                state: 'update',
+                values: [categoryId]
+              }
+            ]);
         } else {
-            await db.runAsync(`
+            const result = await db.runAsync(`
               UPDATE tasks SET title = ?, description = ?, is_until = ?, until = ?, important = ? WHERE id = ?
             `, [
               fields.title.value,
@@ -103,7 +119,23 @@ export function TaskForm({
               taskId
             ]); 
 
-            router.back();
+            elementId = result.lastInsertRowId;
+            sendDynamicReload([
+              {
+                key: 'tasks',
+                state: 'update',
+                values: [elementId.toString()]
+              },
+              {
+                key: 'categories',
+                state: 'update',
+                values: [categoryId]
+              }
+            ]);
+        }
+
+        if(elementId > -1) {
+          router.back();
         }
       } catch(err) {
         setErrorMessage('Saving failed. Please try again.');
@@ -160,9 +192,9 @@ export function TaskForm({
         onPress={() => save()}
         className="mt-4">
         {formType === 'create' ?
-          <Text>Add category</Text>
+          <Text>Add task</Text>
           :
-          <Text>Edit category</Text>
+          <Text>Edit task</Text>
         }
       </Button>
 
