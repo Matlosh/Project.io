@@ -16,6 +16,7 @@ import { UpdateEntry } from "~/components/providers/UpdateProvider";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import { ConfirmationDialog } from "~/components/custom-ui/confirmation-dialog";
+import { useTranslation } from "react-i18next";
  
 type TodosInfo = {
   available: number,
@@ -31,6 +32,8 @@ function TaskEntry({
   projectId: string,
   categoryId: string
 }) {
+  const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
+  const { t: tModals } = useTranslation('translation', { keyPrefix: 'modals' });
   const db = useSQLiteContext();
   const router = useRouter();
   const [todosInfo, setTodosInfo] = useState<TodosInfo>({
@@ -103,21 +106,21 @@ function TaskEntry({
         <Card className={cn("w-full", task.important && "border-l-[1px] border-red-500")}>
           <CardHeader>
             <Text className="text-lg font-bold">{task.title}</Text>
-            <CardDescription>Completed: {todosInfo.completed}/{todosInfo.available} ({todosInfo.available > 0 ? (todosInfo.completed * 100 / todosInfo.available).toFixed(2) : 100}%)</CardDescription>
+            <CardDescription>{t('Completed')}: {todosInfo.completed}/{todosInfo.available} ({todosInfo.available > 0 ? (todosInfo.completed * 100 / todosInfo.available).toFixed(2) : 100}%)</CardDescription>
             {task.is_until ? 
               <CardDescription
-                className={cn(untilDate < new Date() && "text-red-500")}>Until: {format(untilDate, 'do LLL yyyy, HH:mm')}</CardDescription>
+                className={cn(untilDate < new Date() && "text-red-500")}>{t('Until')}: {format(untilDate, 'do LLL yyyy, HH:mm')}</CardDescription>
               :
               null
             }
             {task.finished ?
-              <CardDescription className="text-red-500">Finished</CardDescription>
+              <CardDescription className="text-red-500">{t('Finished')}</CardDescription>
               :
               null
             }
             {todosInfo.available === todosInfo.completed || task.finished ?
               <CardDescription
-                className="text-green-500">Finished</CardDescription>
+                className="text-green-500">{t('Finished')}</CardDescription>
               :
               null
             }
@@ -131,13 +134,13 @@ function TaskEntry({
         <DialogContent className="w-[300px]">
           <DialogHeader>
             <DialogDescription>
-              What do you want to do?  
+              {tModals('What do you want to do?')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose className="flex flex-col gap-2">
               <Button onPress={() => setModalVisible(false)}>
-                <Text>Close</Text>
+                <Text>{tModals('Close')}</Text>
               </Button>
 
               <Button
@@ -146,13 +149,13 @@ function TaskEntry({
                   setModalVisible(false);
                   router.push(`/projects/${projectId}/categories/${categoryId}/tasks/form?action=update&taskId=${task.id}`);
                 }}>
-                <Text>Edit</Text>
+                <Text>{tModals('Edit')}</Text>
               </Button>
 
               <Button
                 className="bg-red-500"
                 onPress={() => setConfirmationVisible(true)}>
-                <Text>Delete</Text>
+                <Text>{tModals('Delete')}</Text>
               </Button>
             </DialogClose>
           </DialogFooter>
@@ -160,7 +163,7 @@ function TaskEntry({
       </Dialog>
 
       <ConfirmationDialog
-        description="Are you sure?"
+        description={tModals('Are you sure?')}
         modalVisible={confirmationVisible}
         onConfirm={() => {
           setConfirmationVisible(false);

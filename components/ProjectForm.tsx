@@ -11,6 +11,7 @@ import { useFormInput } from "~/hooks/useFormInput";
 import { useColorScheme } from "~/hooks/useColorScheme";
 import { useSQLiteContext } from "expo-sqlite";
 import { useNavigation, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 export function ProjectForm({
   formType = 'create',
@@ -20,6 +21,8 @@ export function ProjectForm({
   projectId?: string
 }) {
   const { colorScheme } = useColorScheme();
+  const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
+  const { t: tFields } = useTranslation('translation', { keyPrefix: 'form_fields' });
   const db = useSQLiteContext();
   const router = useRouter();
   const [showColorPickerModal, setShowColorPickerModal] = useState(false);
@@ -76,33 +79,33 @@ export function ProjectForm({
 
   return (
     <View className="w-full flex flex-col gap-4">
-      <Label>Title</Label>
+      <Label>{tFields('Title')}</Label>
       
       <Input
-        placeholder="Title"
+        placeholder={tFields('Title')}
         className="w-full"
         value={fields.title.value}
         onChangeText={text => fields.title.setValue(text)}
       />
 
-      <Label>Color</Label>
+      <Label>{tFields('Color')}</Label>
 
       <View className="flex flex-row items-center gap-4">
-        <Text>Picked color</Text>
+        <Text>{tFields('Picked color')}</Text>
         <View style={{backgroundColor: fields.color.value}} className="w-8 h-8 rounded-full"></View>
       </View>
 
       <Button onPress={() => setShowColorPickerModal(true)}>
-        <Text>Show color picker</Text>
+        <Text>{tFields('Show color picker')}</Text>
       </Button>
 
       <Button
         onPress={() => save()}
         className="mt-4">
         {formType === 'create' ?
-          <Text>Create project</Text>
+          <Text>{t('project_form.create.Save')}</Text>
           :
-          <Text>Edit project</Text>
+          <Text>{t('project_form.update.Save')}</Text>
         }
       </Button>
 
@@ -115,7 +118,7 @@ export function ProjectForm({
           animationType="slide"
           style={{backgroundColor: NAV_THEME.dark.notification}}>
           <PageWrapper className="bg-secondary flex flex-col gap-4">
-            <Text className="text-xl font-bold">Pick a color</Text>
+            <Text className="text-xl font-bold">{tFields('Pick a color')}</Text>
 
             <ColorPicker
               style={{width: '100%'}}
@@ -129,7 +132,7 @@ export function ProjectForm({
             <Button
               className="w-full"
               onPress={() => setShowColorPickerModal(false)}>
-              <Text>Save color</Text>
+              <Text>{tFields('Save color')}</Text>
             </Button>
           </PageWrapper>
         </Modal>

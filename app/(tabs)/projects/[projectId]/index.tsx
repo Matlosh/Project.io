@@ -11,12 +11,14 @@ import { CirclePlus } from "~/lib/icons/CirclePlus";
 import { useThemeColor } from "~/hooks/useThemeColor";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 type ExtendedCategory = Category & {
   active_tasks_count: number
 };
 
 export default function ProjectPage() {
+  const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const params = useLocalSearchParams();
   const { colorOptions } = useThemeColor();
@@ -92,7 +94,7 @@ export default function ProjectPage() {
                   style={{borderColor: category.color}}
                   className="border-l-2">
                   <CardTitle>{category.title}</CardTitle>
-                  <CardDescription>Active tasks: {category.active_tasks_count}</CardDescription>
+                  <CardDescription>{t('Active tasks')}: {category.active_tasks_count}</CardDescription>
                 </CardHeader>
               </Card>
             </Pressable>

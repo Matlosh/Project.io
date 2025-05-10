@@ -4,10 +4,12 @@ import { Switch } from "../ui/switch";
 import { useColorScheme } from "~/hooks/useColorScheme";
 import { setAndroidNavigationBar } from "~/lib/android-navigation-bar";
 import { useSQLiteContext } from "expo-sqlite";
+import { useTranslation } from "react-i18next";
 
 export function ThemeSettings() {
   const db = useSQLiteContext();
   const { isDarkColorScheme, setColorScheme } = useColorScheme();
+  const { t } = useTranslation('translation', { keyPrefix: 'pages.settings' });
 
   function toggleColorScheme() {
     const newTheme = isDarkColorScheme ? 'light' : 'dark';
@@ -24,7 +26,7 @@ export function ThemeSettings() {
   return (
     <View className="flex flex-col gap-4">
       <View className="flex flex-row justify-between">
-        <Text>Dark mode</Text>
+        <Text>{t('Dark mode')}</Text>
         <Switch
           checked={isDarkColorScheme}
           onCheckedChange={toggleColorScheme} />
@@ -34,7 +36,7 @@ export function ThemeSettings() {
         <Text>24 hour clock</Text>
         <Switch
           checked={true}
-          onCheckedChange={() => {}} />
+          onCheckedChange={() => { }} />
       </View>
     </View>
   );

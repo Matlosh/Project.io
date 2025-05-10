@@ -13,6 +13,7 @@ import { Switch } from "./ui/switch";
 import DatePicker from "react-native-date-picker";
 import { format } from 'date-fns';
 import { useDynamicReload } from "~/hooks/useDynamicReload";
+import { useTranslation } from "react-i18next";
 
 export function TaskForm({
   projectId,
@@ -25,6 +26,8 @@ export function TaskForm({
   formType?: 'create' | 'update',
   taskId?: string
 }) {
+  const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
+  const { t: tFields } = useTranslation('translation', { keyPrefix: 'form_fields' });
   const db = useSQLiteContext();
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState('');
@@ -145,24 +148,24 @@ export function TaskForm({
 
   return (
     <View className="w-full flex flex-col gap-4">
-      <Label>Title</Label>
+      <Label>{tFields('Title')}</Label>
       <Input
-        placeholder="Title"
+        placeholder={tFields('Title')}
         className="w-full"
         value={fields.title.value}
         onChangeText={text => fields.title.setValue(text)}
       />
 
-      <Label>Description</Label>
+      <Label>{tFields('Description')}</Label>
       <Textarea
-        placeholder="Description..."
+        placeholder={tFields('Description')}
         className="min-h-[200px]"
         value={fields.description.value}
         onChangeText={text => fields.description.setValue(text)}
       />
 
       <View className="flex flex-row justify-between">
-        <Label>Set until date</Label>
+        <Label>{tFields('Set until date')}</Label>
         <Switch
           checked={fields.showUntil.value}
           onCheckedChange={fields.showUntil.setValue} />
@@ -170,19 +173,19 @@ export function TaskForm({
       
       {fields.showUntil.value &&
         <View className="flex flex-col gap-4">
-          <Label>Until date</Label>
-          <Text>Task's until date: {format(fields.until.value, "do LLL yyyy, HH:mm")}</Text>
+          <Label>{tFields('Until date')}</Label>
+          <Text>{tFields("Task's until date")}: {format(fields.until.value, "do LLL yyyy, HH:mm")}</Text>
           <Button
             onPress={() => {
               setTimeout(() => {
                 setShowDatePicker(prev => !prev);
               }, 200);
-            }}><Text>Show date picker</Text></Button>
+            }}><Text>{tFields('Show date picker')}</Text></Button>
         </View>
       }
 
       <View className="flex flex-row justify-between">
-        <Label>Mark this task as important?</Label>
+        <Label>{tFields('Mark this task as important')}?</Label>
         <Switch
           checked={fields.important.value}
           onCheckedChange={fields.important.setValue} />
@@ -192,9 +195,9 @@ export function TaskForm({
         onPress={() => save()}
         className="mt-4">
         {formType === 'create' ?
-          <Text>Add task</Text>
+          <Text>{t('task_form.create.Save')}</Text>
           :
-          <Text>Edit task</Text>
+          <Text>{t('task_form.update.Save')}</Text>
         }
       </Button>
 

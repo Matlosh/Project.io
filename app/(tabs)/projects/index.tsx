@@ -1,6 +1,7 @@
 import { useGlobalSearchParams, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable } from "react-native";
 import { PageWrapper } from "~/components/PageWrapper";
 import { TopBar } from "~/components/TopBar";
@@ -17,6 +18,7 @@ export default function Projects() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const { reloadEntries } = useDynamicReload();
+  const { t } = useTranslation('translation');
 
   useEffect(() => {
     (async () => {
@@ -34,7 +36,7 @@ export default function Projects() {
   return (
     <PageWrapper>
       <TopBar
-        header="Projects"
+        header={t('menu.Projects')}
         headerRight={<CirclePlus
           onPress={() => router.push('/projects/create')}
           color={colorOptions.text} />} />

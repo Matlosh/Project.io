@@ -11,6 +11,7 @@ import { useFormInput } from "~/hooks/useFormInput";
 import { useColorScheme } from "~/hooks/useColorScheme";
 import { useSQLiteContext } from "expo-sqlite";
 import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 export function CategoryForm({
   formType = 'create',
@@ -21,6 +22,8 @@ export function CategoryForm({
   projectId: string,
   categoryId?: string
 }) {
+  const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
+  const { t: tFields } = useTranslation('translation', { keyPrefix: 'form_fields' });
   const { colorScheme } = useColorScheme();
   const db = useSQLiteContext();
   const router = useRouter();
@@ -76,33 +79,33 @@ export function CategoryForm({
 
   return (
     <View className="w-full flex flex-col gap-4">
-      <Label>Title</Label>
+      <Label>{tFields('Title')}</Label>
       
       <Input
-        placeholder="Title"
+        placeholder={tFields('Title')}
         className="w-full"
         value={fields.title.value}
         onChangeText={text => fields.title.setValue(text)}
       />
 
-      <Label>Color</Label>
+      <Label>{tFields('Color')}</Label>
 
       <View className="flex flex-row items-center gap-4">
-        <Text>Picked color</Text>
+        <Text>{tFields('Picked color')}</Text>
         <View style={{backgroundColor: fields.color.value}} className="w-8 h-8 rounded-full"></View>
       </View>
 
       <Button onPress={() => setShowColorPickerModal(true)}>
-        <Text>Show color picker</Text>
+        <Text>{tFields('Show color picker')}</Text>
       </Button>
 
       <Button
         onPress={() => save()}
         className="mt-4">
         {formType === 'create' ?
-          <Text>Add category</Text>
+          <Text>{t('category_form.create.Save')}</Text>
           :
-          <Text>Edit category</Text>
+          <Text>{t('category_form.update.Save')}</Text>
         }
       </Button>
 
@@ -114,7 +117,7 @@ export function CategoryForm({
         animationType="slide"
         style={{backgroundColor: NAV_THEME.dark.notification}}>
         <PageWrapper className="bg-secondary flex flex-col gap-4">
-          <Text className="text-xl font-bold">Pick a color</Text>
+          <Text className="text-xl font-bold">{tFields('Pick a color')}</Text>
 
           <ColorPicker
             style={{width: '100%'}}
@@ -128,7 +131,7 @@ export function CategoryForm({
           <Button
             className="w-full"
             onPress={() => setShowColorPickerModal(false)}>
-            <Text>Save color</Text>
+            <Text>{tFields('Save color')}</Text>
           </Button>
         </PageWrapper>
       </Modal>

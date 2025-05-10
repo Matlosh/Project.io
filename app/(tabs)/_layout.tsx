@@ -5,10 +5,12 @@ import { Home } from "~/lib/icons/Home";
 import { Rows3 } from "~/lib/icons/Rows3";
 import { Settings } from "~/lib/icons/Settings";
 import { useColorScheme } from "~/hooks/useColorScheme";
+import { useTranslation } from "react-i18next";
 
 export default function TabsLayout() {
   const db = useSQLiteContext();
   const { colorScheme, setColorScheme } = useColorScheme();
+  const { t } = useTranslation('menu');
 
   useLayoutEffect(() => {
     (async () => {
@@ -28,7 +30,7 @@ export default function TabsLayout() {
       <Tabs.Screen 
         name="index"
         options={{
-          title: 'Home',
+          title: t('Home'),
           headerShown: false,
           tabBarIcon: ({ color }) => <Home color={color} />
         }}/>
@@ -36,7 +38,7 @@ export default function TabsLayout() {
       <Tabs.Screen 
         name="projects"
         options={{
-          title: 'Projects',
+          title: t('Projects'),
           headerShown: false,
           tabBarIcon: ({ color }) => <Rows3 color={color} />
         }}/>
@@ -44,7 +46,7 @@ export default function TabsLayout() {
       <Tabs.Screen 
         name="settings"
         options={{
-          title: 'Settings',
+          title: t('Settings'),
           headerShown: false,
           tabBarIcon: ({ color }) => <Settings color={color} />
         }}/>

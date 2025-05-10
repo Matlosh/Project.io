@@ -17,6 +17,7 @@ import { Trash2 } from "~/lib/icons/Trash2";
 import { useDynamicReload } from "~/hooks/useDynamicReload";
 import { Separator } from "~/components/ui/separator";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 function TodoEntry({
   todo,
@@ -110,6 +111,7 @@ function TodoEntry({
 }
 
 export default function TaskPage() {
+  const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
   const { projectId, categoryId, taskId } = useLocalSearchParams<{
     projectId: string,
     categoryId: string,
@@ -193,7 +195,7 @@ export default function TaskPage() {
                 orientation="horizontal"
                 className="mt-4 mb-2"
                 style={{backgroundColor: colorOptions.text}} />
-              <Text className="text-lg font-bold">Description</Text>
+              <Text className="text-lg font-bold">{t('Description')}</Text>
               <Text>{task.description}</Text>
             </View>
             :
@@ -205,17 +207,17 @@ export default function TaskPage() {
             className="mt-4 mb-2"
             style={{backgroundColor: colorOptions.text}} />
 
-          <Text className="text-lg font-bold">Information about this task</Text>
+          <Text className="text-lg font-bold">{t('Information about this task')}</Text>
 
           <View className="flex flex-col gap-2">
             <View className="flex flex-row gap-2 flex-wrap">
-              <Text className="font-bold">Full title:</Text>
+              <Text className="font-bold">{t('Full title')}:</Text>
               <Text>{task.title}</Text>
             </View> 
 
             {task.is_until ?
               <View className="flex flex-row gap-2">
-                <Text className="font-bold">Until:</Text>
+                <Text className="font-bold">{t('Until')}:</Text>
                 <Text>{format(new Date(task.until * 1000), 'do LLL yyyy, HH:mm')}</Text>
               </View> 
               :

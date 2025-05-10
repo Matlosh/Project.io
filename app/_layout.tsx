@@ -14,6 +14,7 @@ import { migrateDbIfNeeded } from '~/lib/database';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { UpdateProvider } from '~/components/providers/UpdateProvider';
+import "~/lib/i18n";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
