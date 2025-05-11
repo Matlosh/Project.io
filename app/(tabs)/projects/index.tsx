@@ -1,8 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { useGlobalSearchParams, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable } from "react-native";
+import { ActivityIndicator, Pressable } from "react-native";
 import { PageWrapper } from "~/components/PageWrapper";
 import { TopBar } from "~/components/TopBar";
 import { UpdateContext } from "~/components/providers/UpdateProvider";
@@ -11,23 +12,18 @@ import { useDynamicReload } from "~/hooks/useDynamicReload";
 import { useThemeColor } from "~/hooks/useThemeColor";
 import { Project } from "~/lib/database";
 import { CirclePlus } from "~/lib/icons/CirclePlus";
+import { fetchProjects } from "~/queries/projects";
 
 export default function Projects() {
   const { colorOptions } = useThemeColor();
   const db = useSQLiteContext();
   const router = useRouter();
-  const [projects, setProjects] = useState<Project[]>([]);
   const { reloadEntries } = useDynamicReload();
   const { t } = useTranslation('translation');
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const projects = await db.getAllAsync<Project>(`SELECT * FROM projects`);
-        setProjects(projects);
-      } catch(err) {}
-    })();
-  }, []);
+  const { data: projects, isLoading } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => fetchProjects(db)
+  });
 
   useEffect(() => {
     console.log('updateEntries', reloadEntries);
@@ -41,7 +37,9 @@ export default function Projects() {
           onPress={() => router.push('/projects/create')}
           color={colorOptions.text} />} />
 
-      {projects.map(project => (
+      {isLoading && <ActivityIndicator size="large" />}
+
+      {projects && projects.map(project => (
         <Pressable
           key={project.id}
           className="w-full"

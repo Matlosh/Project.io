@@ -15,15 +15,19 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { UpdateProvider } from '~/components/providers/UpdateProvider';
 import "~/lib/i18n";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
   colors: NAV_THEME.light,
 };
+
 const DARK_THEME: Theme = {
   ...DarkTheme,
   colors: NAV_THEME.dark,
 };
+
+const queryClient = new QueryClient();
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -58,21 +62,23 @@ export default function RootLayout() {
     <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
       <SafeAreaProvider>
         <GestureHandlerRootView>
-          <SQLiteProvider databaseName='project_io.db' onInit={migrateDbIfNeeded}>
-            <UpdateProvider>
-              <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-              <Stack>
-                <Stack.Screen
-                  name='(tabs)'
-                  options={{
-                    title: 'Project.io',
-                    headerShown: false
-                  }}
-                />
-              </Stack>
-              <PortalHost />
-            </UpdateProvider>
-          </SQLiteProvider>
+          <QueryClientProvider client={queryClient}>
+            <SQLiteProvider databaseName='project_io.db' onInit={migrateDbIfNeeded}>
+              <UpdateProvider>
+                <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
+                <Stack>
+                  <Stack.Screen
+                    name='(tabs)'
+                    options={{
+                      title: 'Project.io',
+                      headerShown: false
+                    }}
+                  />
+                </Stack>
+                <PortalHost />
+              </UpdateProvider>
+            </SQLiteProvider>
+          </QueryClientProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
     </ThemeProvider>
