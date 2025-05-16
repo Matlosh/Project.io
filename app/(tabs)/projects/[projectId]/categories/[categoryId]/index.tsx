@@ -17,6 +17,9 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Button } from "~/components/ui/button";
 import { ConfirmationDialog } from "~/components/custom-ui/confirmation-dialog";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { getTasks } from "~/queries/tasks";
+import { getCategory } from "~/queries/categories";
  
 type TodosInfo = {
   available: number,
@@ -182,83 +185,38 @@ export default function CategoryPage() {
   }>();
   const router = useRouter();
   const db = useSQLiteContext();
-  const [category, setCategory] = useState<Category | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
   const { colorOptions } = useThemeColor();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await db.getFirstAsync<Category>(`
-          SELECT * FROM categories WHERE id = ?
-        `, categoryId);
+  const { data: category, isLoading: isCategoryLoading, error: categoryError } = useQuery({
+    queryKey: ['category', categoryId],
+    queryFn: () => getCategory(db, categoryId)
+  });
 
-        if(data === null) {
-          showToast(`Could not find matching category.`);
-          router.back();
-        }
+  const fetchedCategoryId = category?.id;
 
-        setCategory(data);
-      } catch(err) {
-        showToast(`Could not fetch category's data.`);
-        router.back();
-      }
-    })();
-  }, []);
+  const { data: tasks, isLoading: areTasksLoading, error: tasksError, refetch: refetchTasks } = useQuery({
+    queryKey: ['tasks', categoryId],
+    queryFn: () => getTasks(db, categoryId),
+    enabled: !!fetchedCategoryId
+  });
 
   useDynamicReload((entries: UpdateEntry[]) => {
     const taskEntry = entries.find(entry => entry.key === 'tasks');
 
     if(taskEntry) {
       if(taskEntry.state === 'delete') {
-        setTasks([...tasks.filter(task => task.id.toString() !== taskEntry.values[0])]);
+        // setTasks([...tasks.filter(task => task.id.toString() !== taskEntry.values[0])]);
       } else {
-        reloadTask(taskEntry.values[0]);
+        // reloadTask(taskEntry.values[0]);
       }
     }
   }, ['tasks']);
-
-  useEffect(() => {
-    if(category !== null) {
-      (async () => {
-        try {
-          const data = await db.getAllAsync<Task>(`
-            SELECT * FROM tasks WHERE category_id = ? ORDER BY finished DESC
-          `, category.id);
-
-          setTasks(data);
-          setLoading(false);
-        } catch(err) {
-          showToast(`Could not fetch category's tasks.`);
-          router.back();
-        }
-      })();
-    }
-  }, [category]);
-
-  const reloadTask = async (taskId: string) => {
-    try {
-      const data = await db.getFirstAsync<Task>(`
-        SELECT * FROM tasks WHERE id = ?
-      `, [taskId]);
-
-      if(data) {
-        setTasks([
-          ...(tasks.filter(task => task.id.toString() !== taskId)),
-          data
-        ]);
-      }
-    } catch(err) {
-      showToast(`Could not reload task.`);
-    }
-  };
 
   return (
     <PageWrapper>
       <TopBar
         showArrowBack
-        header={category !== null ? category.title : ''}
+        header={category ? category.title : ''}
         headerRight={
           <CirclePlus
             onPress={() => router.push(`/projects/${projectId}/categories/${categoryId}/tasks/form`)}
@@ -266,13 +224,13 @@ export default function CategoryPage() {
         }
       />
 
-      {loading ?
+      {areTasksLoading ?
         <View className="w-full h-full justify-center items-center">
           <ActivityIndicator size="large" /> 
         </View>  
         :
         <>
-          {tasks.map(task => (
+          {tasks && tasks.map(task => (
             <TaskEntry
               key={task.id}
               task={task}

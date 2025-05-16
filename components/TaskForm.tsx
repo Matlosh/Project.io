@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal, View } from "react-native";
 import { Input } from "~/components/ui/input";
 import { Button } from "./ui/button";
@@ -12,22 +12,36 @@ import { Textarea } from "./ui/textarea";
 import { Switch } from "./ui/switch";
 import DatePicker from "react-native-date-picker";
 import { format } from 'date-fns';
-import { useDynamicReload } from "~/hooks/useDynamicReload";
 import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { insertTask, updateTask } from "~/queries/tasks";
 
 export function TaskForm({
-  projectId,
   categoryId,
   formType = 'create',
-  taskId = '0' 
+  taskId 
 }: {
-  projectId: string,
   categoryId: string,
   formType?: 'create' | 'update',
   taskId?: string
 }) {
   const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
   const { t: tFields } = useTranslation('translation', { keyPrefix: 'form_fields' });
+  const { t: tErrors } = useTranslation('translation', { keyPrefix: 'form_errors' });
+
+  const taskSchema = useMemo(() => z.object({
+    title: z.string().min(1, { message: tErrors('title.required') }),
+    categoryId: z.string().min(1, { message: tErrors('categoryId.required') }),
+    description: z.string().optional(),
+    showUntil: z.boolean(),
+    until: z.date(),
+    important: z.boolean(),
+    id: z.string().optional()
+  }), []);
+
+  const queryClient = useQueryClient();
+
   const db = useSQLiteContext();
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState('');
@@ -39,111 +53,51 @@ export function TaskForm({
     until: useFormInput<Date>(new Date(), 'until'),
     important: useFormInput(false, 'important')
   };
-  const [categories, setCategories] = useState<Category[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const { sendDynamicReload } = useDynamicReload();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const categories = await db.getAllAsync<Category>(`
-          SELECT * FROM categories WHERE project_id = ?
-        `, [
-          projectId
-        ]);
-        
-        setCategories(categories);
-      } catch(err) {
-        setErrorMessage("Fetching project's categories failed. Please try again.");
-      }
-    })();    
-  }, []);
-
-  const validate = (): boolean => {
-    let isOkay = true;
-    const fieldNames: string[] = [];
-
-    if(fields.title.value.trim().length < 1) {
-      isOkay = false;
-      fieldNames.push(fields.title.name);
+  const insertMutation = useMutation({
+    mutationFn: (task: z.infer<typeof taskSchema>) => insertTask(db, task),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      router.back();
+    },
+    onError: () => {
+      setErrorMessage(tFields('Saving failed. Please try again.'));
     }
+  });
 
-    if(Number(fields.categoryId.value) < 1 || Number.isNaN(Number(fields.categoryId.value))) {
-      isOkay = false;
-      fieldNames.push(fields.categoryId.name); 
+  const updateMutation = useMutation({
+    mutationFn: (task: z.infer<typeof taskSchema>) => updateTask(db, task),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      router.back();
+    },
+    onError: () => {
+      setErrorMessage(tFields('Saving failed. Please try again.'));
     }
-
-    if(!isOkay)
-      setErrorMessage(`Please fill all necessary fields: ${fieldNames.join(', ')}`);
-    return isOkay;
-  };
+  });
 
   const save = () => {
-    if(!validate()) return;
+    const data = taskSchema.safeParse({
+      title: fields.title.value,
+      categoryId: fields.categoryId.value,
+      description: fields.description.value,
+      showUntil: fields.showUntil.value,
+      until: fields.showUntil.value,
+      important: fields.important.value,
+      id: taskId
+    });
 
-    (async () => {
-      try {
-        let elementId = -1;
+    if(!data.success) {
+      setErrorMessage(data.error.errors.map(e => e.message).join(', '));
+      return; 
+    }
 
-        if(formType === 'create') {
-            const result = await db.runAsync(`
-              INSERT INTO tasks (category_id, title, description, is_until, until, important) VALUES(?, ?, ?, ?, ?, ?)
-            `, [
-              fields.categoryId.value,
-              fields.title.value,
-              fields.description.value,
-              fields.showUntil.value,
-              Math.floor(fields.until.value.getTime() / 1000),
-              fields.important.value
-            ]); 
-
-            elementId = result.lastInsertRowId;
-            sendDynamicReload([
-              {
-                key: 'tasks',
-                state: 'create',
-                values: [elementId.toString()]
-              },
-              {
-                key: 'categories',
-                state: 'update',
-                values: [categoryId]
-              }
-            ]);
-        } else {
-            const result = await db.runAsync(`
-              UPDATE tasks SET title = ?, description = ?, is_until = ?, until = ?, important = ? WHERE id = ?
-            `, [
-              fields.title.value,
-              fields.description.value,
-              fields.showUntil.value,
-              Math.floor(fields.until.value.getTime() / 1000),
-              fields.important.value,
-              taskId
-            ]); 
-
-            elementId = result.lastInsertRowId;
-            sendDynamicReload([
-              {
-                key: 'tasks',
-                state: 'update',
-                values: [elementId.toString()]
-              },
-              {
-                key: 'categories',
-                state: 'update',
-                values: [categoryId]
-              }
-            ]);
-        }
-
-        if(elementId > -1) {
-          router.back();
-        }
-      } catch(err) {
-        setErrorMessage('Saving failed. Please try again.');
-      }
-    })();
+    if(formType === 'create') {
+      insertMutation.mutate(data.data);
+    } else {
+      updateMutation.mutate(data.data);
+    }
   };
 
   return (

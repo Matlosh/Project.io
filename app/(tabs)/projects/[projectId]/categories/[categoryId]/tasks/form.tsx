@@ -7,8 +7,7 @@ import { TopBar } from "~/components/TopBar";
 
 export default function Form() {
   const { t } = useTranslation('translation', { keyPrefix: 'pages.projects.task_form' });
-  const { projectId, categoryId, action, taskId } = useLocalSearchParams<{
-      projectId: string,
+  const { categoryId, action, taskId } = useLocalSearchParams<{
       categoryId: string,
       action?: string,
       taskId?: string
@@ -22,7 +21,6 @@ export default function Form() {
       />
       <TaskForm
         categoryId={categoryId}
-        projectId={projectId}
         taskId={taskId}
         formType={action === 'update' && !!taskId ? 'update' : 'create'} />
     </PageWrapper>

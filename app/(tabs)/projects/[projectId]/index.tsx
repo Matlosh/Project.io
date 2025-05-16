@@ -12,78 +12,54 @@ import { useThemeColor } from "~/hooks/useThemeColor";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { getExtendedCategories } from "~/queries/categories";
+import { getProject } from "~/queries/projects";
 
-type ExtendedCategory = Category & {
+export type ExtendedCategory = Category & {
   active_tasks_count: number
 };
 
 export default function ProjectPage() {
   const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
-  const params = useLocalSearchParams();
   const { colorOptions } = useThemeColor();
   const db = useSQLiteContext();
   const router = useRouter();
-  const [project, setProject] = useState<Project | null>(null);
-  const [categories, setCategories] = useState<ExtendedCategory[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => getProject(db, projectId)
+  });
+
+  const { data: categories, isLoading: areCategoriesLoading, error: categoriesError } = useQuery({
+    queryKey: ['categories', 'extended', projectId],
+    queryFn: () => getExtendedCategories(db, projectId)
+  });
 
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await db.getFirstAsync<Project>(`
-          SELECT * FROM projects WHERE id = ? 
-        `, [projectId])
-
-        if(data === null) {
-          showToast(`Could not find matching project.`);
-          router.back();
-        }
-
-        setProject(data);
-        setLoading(false);
-      } catch(err) {
-        showToast(`Could not fetch project's data.`);
-        router.back();
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if(project !== null) {
-      (async () => {
-        try {
-          const data = await db.getAllAsync<ExtendedCategory>(`
-            SELECT categories.*, (SELECT COUNT(id) FROM tasks WHERE finished = 1 AND category_id = categories.id) AS active_tasks_count FROM categories WHERE project_id = ? 
-          `, [projectId]); 
-
-          setCategories(data);
-        } catch(err) {
-          showToast(`Cound not fetch project's categories.`);
-          router.back();
-        }
-      })();
+    if(projectError || categoriesError) {
+      router.back();
     }
-  }, [project]);
+  }, [projectError, categoriesError]);
 
   return (
     <PageWrapper>
       <TopBar
         showArrowBack
-        header={project !== null ? project.title : ''}
+        header={project ? project.title : ''}
         headerRight={
           <CirclePlus
             color={colorOptions.text}
             onPress={() => router.push(`/projects/${projectId}/categories/create`)} />
         } />
 
-      {loading ?
+      {isProjectLoading && areCategoriesLoading ?
         <View className="w-full h-full justify-center items-center">
           <ActivityIndicator size="large" /> 
         </View>  
         :
         <>
-          {categories.map(category => (
+          {categories && categories.map(category => (
             <Pressable
               key={category.id}
               className="w-full"

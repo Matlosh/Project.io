@@ -12,7 +12,7 @@ import { useDynamicReload } from "~/hooks/useDynamicReload";
 import { useThemeColor } from "~/hooks/useThemeColor";
 import { Project } from "~/lib/database";
 import { CirclePlus } from "~/lib/icons/CirclePlus";
-import { fetchProjects } from "~/queries/projects";
+import { getProjects } from "~/queries/projects";
 
 export default function Projects() {
   const { colorOptions } = useThemeColor();
@@ -22,7 +22,7 @@ export default function Projects() {
   const { t } = useTranslation('translation');
   const { data: projects, isLoading } = useQuery({
     queryKey: ['projects'],
-    queryFn: () => fetchProjects(db)
+    queryFn: () => getProjects(db)
   });
 
   useEffect(() => {

@@ -1,4 +1,6 @@
-export default {
+import { defaultLang } from "./default";
+
+const en: defaultLang = {
   menu: {
     'Home': 'Home',
     'Projects': 'Projects',
@@ -67,6 +69,24 @@ export default {
     'Show date picker': 'Show date picker',
     'Mark this task as important': 'Mark this task as important'
   },
+  form_errors: {
+    'title': {
+      'required': 'Title is required',
+    },
+    'color': {
+      'required': 'Color is required'
+    },
+    'projectId': {
+      'required': 'Project ID is required'
+    },
+    'categoryId': {
+      'required': 'Category ID is required'
+    },
+    'Saving failed. Please try again.': 'Saving failed. Please try again.'
+  },
+  errors: {
+    'Task not found.': 'Task not found.'
+  },
   modals: {
     'What do you want to do?': 'What do you want to do?',
     'Close': 'Close',
@@ -77,3 +97,5 @@ export default {
     'No': 'No'
   }
 };
+
+export default en;

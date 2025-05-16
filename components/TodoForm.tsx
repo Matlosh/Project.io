@@ -1,117 +1,86 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, View } from "react-native";
 import { Input } from "~/components/ui/input";
 import { Text } from "./ui/text";
 import { useFormInput } from "~/hooks/useFormInput";
 import { useSQLiteContext } from "expo-sqlite";
-import { useRouter } from "expo-router";
 import { Plus } from "~/lib/icons/Plus";
 import { useThemeColor } from "~/hooks/useThemeColor";
 import { Todo } from "~/lib/database";
 import { resetFields } from "~/lib/utils";
-import { useDynamicReload } from "~/hooks/useDynamicReload";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { insertTodo, updateTodo } from "~/queries/todos";
 
 export function TodoForm({
   taskId,
   formType = 'create',
-  onSave
+  todoId,
 }: {
   taskId: string,
   formType?: 'create' | 'update',
-  onSave?: (todo: Todo) => void
+  todoId?: string,
 }) {
+  const { t: tErrors } = useTranslation('translation', { keyPrefix: 'form_errors' });
+
+  const todoSchema = useMemo(() => z.object({
+    taskId: z.string(),
+    title: z.string().min(1, { message: tErrors('title.required') }),
+    done: z.boolean(),
+    id: z.string().optional()
+  }), [tErrors]);
+
+  const queryClient = useQueryClient();
+
   const db = useSQLiteContext();
   const [errorMessage, setErrorMessage] = useState('');
   const { colorOptions } = useThemeColor();
-  const { sendDynamicReload } = useDynamicReload();
   const fields = {
     title: useFormInput('', 'title'),
     done: useFormInput(false, 'done')
   };
 
-  const validate = (): boolean => {
-    let isOkay = true;
-    const fieldNames: string[] = [];
-
-    if(fields.title.value.trim().length < 1) {
-      isOkay = false;
-      fieldNames.push(fields.title.name);
+  const insertMutation = useMutation({
+    mutationFn: (todo: z.infer<typeof todoSchema>) => insertTodo(db, todo),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: () => {
+      setErrorMessage(tErrors('Saving failed. Please try again.'));
     }
+  });
 
-    if(!isOkay)
-      setErrorMessage(`Please fill all necessary fields: ${fieldNames.join(', ')}`);
-    else
-      setErrorMessage('');
-    return isOkay;
-  };
+  const updateMutation = useMutation({
+    mutationFn: (todo: z.infer<typeof todoSchema>) => updateTodo(db, todo),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: () => {
+      setErrorMessage(tErrors('Saving failed. Please try again.'));
+    }
+  });
 
   const save = () => {
-    if(!validate()) return;
+    const data = todoSchema.safeParse({
+      taskId,
+      title: fields.title.value,
+      done: fields.done.value,
+      id: todoId 
+    });
 
-    (async () => {
-      try {
-        let todoId = -1;
+    if(!data.success) {
+      setErrorMessage(data.error.errors.map(e => e.message).join(', '));
+      return;
+    }
 
-        if(formType === 'create') {
-          const result = await db.runAsync(`
-            INSERT INTO todos (task_id, title, done) VALUES(?, ?, ?)
-          `, [
-            taskId,
-            fields.title.value,
-            fields.done.value
-          ]); 
-
-          todoId = result.lastInsertRowId;
-          sendDynamicReload([
-            {
-              key: 'todos',
-              state: 'create',
-              values: [todoId.toString()]
-            },
-            {
-              key: 'tasks',
-              state: 'update',
-              values: [taskId]
-            }
-          ]);
-        } else {
-          const result = await db.runAsync(`
-            UPDATE todos SET title = ?, done = ? WHERE id = ?
-          `, [
-            fields.title.value,
-            fields.done.value,
-            taskId
-          ]); 
-
-          todoId = result.lastInsertRowId;
-          sendDynamicReload([
-            {
-              key: 'todos',
-              state: 'update',
-              values: [todoId.toString()]
-            },
-            {
-              key: 'tasks',
-              state: 'update',
-              values: [taskId]
-            }
-          ]);
-        }
-
-        if(todoId > -1) {
-          onSave && onSave({
-            id: todoId,
-            task_id: Number(taskId),
-            title: fields.title.value,
-            done: +fields.done.value
-          });
-          
-          resetFields(fields);
-        }
-      } catch(err) {
-        setErrorMessage('Saving failed. Please try again.');
-      }
-    })();
+    if(formType === 'create') {
+      insertMutation.mutate(data.data);
+    } else {
+      updateMutation.mutate(data.data);
+    }
   };
 
   return (

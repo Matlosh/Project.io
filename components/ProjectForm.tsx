@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Modal, View } from "react-native";
 import ColorPicker, { HueSlider, OpacitySlider, Panel1, Preview, Swatches } from "reanimated-color-picker";
 import { Input } from "~/components/ui/input";
@@ -12,17 +12,30 @@ import { useColorScheme } from "~/hooks/useColorScheme";
 import { useSQLiteContext } from "expo-sqlite";
 import { useNavigation, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { insertProject, updateProject } from "~/queries/projects";
 
 export function ProjectForm({
   formType = 'create',
-  projectId = '0'
+  projectId
 }: {
   formType?: 'create' | 'update',
   projectId?: string
 }) {
-  const { colorScheme } = useColorScheme();
   const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
   const { t: tFields } = useTranslation('translation', { keyPrefix: 'form_fields' });
+  const { t: tErrors } = useTranslation('translation', { keyPrefix: 'form_errors' });
+
+  const projectSchema = useMemo(() => z.object({
+    title: z.string().min(1, { message: tErrors('title.required') }),
+    color: z.string().min(1, { message: tErrors('color.required') }),
+    id: z.string().optional()
+  }), [tErrors]);
+
+  const queryClient = useQueryClient();
+
+  const { colorScheme } = useColorScheme();
   const db = useSQLiteContext();
   const router = useRouter();
   const [showColorPickerModal, setShowColorPickerModal] = useState(false);
@@ -32,49 +45,45 @@ export function ProjectForm({
     color: useFormInput(colorScheme === 'dark' ? '#ffffff' : '#000000', 'color')
   };
 
-  const validate = (): boolean => {
-    let isOkay = true;
-    const fieldNames: string[] = [];
-
-    if(fields.title.value.trim().length < 1) {
-      isOkay = false;
-      fieldNames.push(fields.title.name);
+  const insertMutation = useMutation({
+    mutationFn: (project: z.infer<typeof projectSchema>) => insertProject(db, project),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      router.back();
+    },
+    onError: () => {
+      setErrorMessage(tErrors('Saving failed. Please try again.'));
     }
+  });
 
-    if(fields.color.value.trim().length < 1) {
-      isOkay = false;
-      fieldNames.push(fields.color.name);
+  const updateMutation = useMutation({
+    mutationFn: (project: z.infer<typeof projectSchema>) => updateProject(db, project),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      router.back();
+    },
+    onError: () => {
+      setErrorMessage(tErrors('Saving failed. Please try again.'));
     }
-
-    if(!isOkay)
-      setErrorMessage(`Please fill all necessary fields: ${fieldNames.join(',')}`);
-    return isOkay;
-  };
+  });
 
   const save = () => {
-    if(!validate()) return;
+    const data = projectSchema.safeParse({
+      title: fields.title.value,
+      color: fields.color.value,
+      id: projectId
+    });
 
-    (async () => {
-      try {
-        if(formType === 'create') {
-            await db.runAsync(`
-              INSERT INTO projects (title, color) VALUES(?, ?)
-            `, [fields.title.value, fields.color.value]); 
+    if(!data.success) {
+      setErrorMessage(data.error.errors.map(e => e.message).join(', '));
+      return;
+    }
 
-            router.back();
-        } else {
-            await db.runAsync(`
-              UPDATE projects SET title = ?, color = ? WHERE id = ?
-            `, [fields.title.value, fields.color.value, projectId]); 
-
-            router.back();
-        }
-
-        router.setParams({ update: ['project'], updateValue: [3] })
-      } catch(err) {
-        setErrorMessage('Saving failed. Please try again.');
-      }
-    })();
+    if(formType === 'create') {
+      insertMutation.mutate(data.data);
+    } else {
+      updateMutation.mutate(data.data);
+    }
   };
 
   return (

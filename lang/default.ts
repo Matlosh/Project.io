@@ -1,4 +1,4 @@
-export const defaultLang = {
+const defaultLang = {
   menu: {
     'Home': '',
     'Projects': '',
@@ -67,6 +67,24 @@ export const defaultLang = {
     'Show date picker': '',
     'Mark this task as important': ''
   },
+  form_errors: {
+    'title': {
+      'required': ''
+    },
+    'color': {
+      'required': ''
+    },
+    'projectId': {
+      'required': ''
+    },
+    'categoryId': {
+      'required': ''
+    },
+    'Saving failed. Please try again.': '',
+  },
+  errors: {
+    'Task not found.': ''
+  },
   modals: {
     'What do you want to do?': '',
     'Close': '',
@@ -77,3 +95,5 @@ export const defaultLang = {
     'No': ''
   }
 };
+
+export type defaultLang = typeof defaultLang;

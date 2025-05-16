@@ -15,7 +15,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { UpdateProvider } from '~/components/providers/UpdateProvider';
 import "~/lib/i18n";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { showToast } from '~/lib/utils';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -27,7 +28,19 @@ const DARK_THEME: Theme = {
   colors: NAV_THEME.dark,
 };
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Database is hosted locally, so there shouldn't be need to retry
+      retry: 0
+    }
+  },
+  queryCache: new QueryCache({
+    onError: (error) => {
+      showToast(error.message); 
+    }
+  })
+});
 
 export {
   // Catch any errors thrown by the Layout component.

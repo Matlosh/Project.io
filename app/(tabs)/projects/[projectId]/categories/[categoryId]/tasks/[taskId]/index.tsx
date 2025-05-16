@@ -18,6 +18,9 @@ import { useDynamicReload } from "~/hooks/useDynamicReload";
 import { Separator } from "~/components/ui/separator";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteTodo, getTodos } from "~/queries/todos";
+import { getTask } from "~/queries/tasks";
 
 function TodoEntry({
   todo,
@@ -112,6 +115,8 @@ function TodoEntry({
 
 export default function TaskPage() {
   const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
+  const { t: tErrors } = useTranslation('translation', { keyPrefix: 'errors' });
+
   const { projectId, categoryId, taskId } = useLocalSearchParams<{
     projectId: string,
     categoryId: string,
@@ -120,110 +125,95 @@ export default function TaskPage() {
   const db = useSQLiteContext();
   const router = useRouter();
   const { colorOptions } = useThemeColor();
-  const [task, setTask] = useState<Task | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [todos, setTodos] = useState<Todo[]>([]);  
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await db.getFirstAsync<Task>(`
-          SELECT * FROM tasks WHERE id = ? 
-        `, [taskId]);
+  const queryClient = useQueryClient();
 
-        if(data === null) {
-          showToast(`Can't find task's data.`);
-          router.back();
-        }
+  const { data: task, isLoading: isTaskLoading } = useQuery({
+    queryKey: ['task', taskId],
+    queryFn: () => getTask(db, taskId)
+  });
 
-        setTask(data);
+  const { data: todos, isLoading: areTodosLoading } = useQuery({
+    queryKey: ['todos', taskId],
+    queryFn: () => getTodos(db, taskId)
+  });
 
-        const todosData = await db.getAllAsync<Todo>(`
-          SELECT * FROM todos WHERE task_id = ?
-        `, taskId); 
-
-        setTodos(todosData);
-        setLoading(false);
-      } catch(err) {
-        showToast(`Can't fetch task's data.`);
-        router.back();
-      }
-    })();
-  }, []);
-
-  const onTodoSave = (todo: Todo) => {
-    setTodos([
-      ...(todos.filter(el => el.id !== todo.id)),
-      todo
-    ]);
-  };
-
-  const onTodoDelete = (todoId: number) => {
-    setTodos([...(todos.filter(todo => todo.id !== todoId))]);
-  }
+  const deleteTodoMutation = useMutation({
+    mutationFn: (todoId: string) => deleteTodo(db, todoId),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['todos'] })
+  });
 
   return (
     <PageWrapper>
       <TopBar
         showArrowBack
-        header={task !== null ? task.title : ''}
+        header={task ? task.title : ''}
       />
 
-      {loading || task === null ?
+      {isTaskLoading || areTodosLoading ?
         <View className="w-full h-full justify-center items-center">
           <ActivityIndicator size="large" /> 
         </View>  
         :
         <View className="w-full flex flex-col gap-4">
-          {todos.map(todo => (
-            <TodoEntry
-              key={todo.id}
-              todo={todo}
-              onDelete={onTodoDelete}
-            />
-          ))}
-
+          {todos &&
+            <View className="flex flex-col gap-2">
+              {todos.filter(todo => todo.id.toString() !== deleteTodoMutation.variables).map(todo => (
+                <TodoEntry
+                  key={todo.id}
+                  todo={todo}
+                  onDelete={() => deleteTodoMutation.mutate(todo.id.toString())}
+                />
+              ))} 
+            </View> 
+          }
+          
           <TodoForm
             formType="create"
             taskId={taskId}
-            onSave={onTodoSave}
           />
 
-          {task.description.trim().length > 0 ?
-            <View className="flex flex-col gap-4">
+          {task ?
+            <>
+              {task.description.trim().length > 0 ?
+                <View className="flex flex-col gap-4">
+                  <Separator
+                    orientation="horizontal"
+                    className="mt-4 mb-2"
+                    style={{backgroundColor: colorOptions.text}} />
+                  <Text className="text-lg font-bold">{t('Description')}</Text>
+                  <Text>{task.description}</Text>
+                </View>
+                :
+                null
+              }
+
               <Separator
                 orientation="horizontal"
                 className="mt-4 mb-2"
                 style={{backgroundColor: colorOptions.text}} />
-              <Text className="text-lg font-bold">{t('Description')}</Text>
-              <Text>{task.description}</Text>
-            </View>
-            :
-            null
-          }
 
-          <Separator
-            orientation="horizontal"
-            className="mt-4 mb-2"
-            style={{backgroundColor: colorOptions.text}} />
+              <Text className="text-lg font-bold">{t('Information about this task')}</Text>
 
-          <Text className="text-lg font-bold">{t('Information about this task')}</Text>
+              <View className="flex flex-col gap-2">
+                <View className="flex flex-row gap-2 flex-wrap">
+                  <Text className="font-bold">{t('Full title')}:</Text>
+                  <Text>{task.title}</Text>
+                </View> 
 
-          <View className="flex flex-col gap-2">
-            <View className="flex flex-row gap-2 flex-wrap">
-              <Text className="font-bold">{t('Full title')}:</Text>
-              <Text>{task.title}</Text>
-            </View> 
-
-            {task.is_until ?
-              <View className="flex flex-row gap-2">
-                <Text className="font-bold">{t('Until')}:</Text>
-                <Text>{format(new Date(task.until * 1000), 'do LLL yyyy, HH:mm')}</Text>
+                {task.is_until ?
+                  <View className="flex flex-row gap-2">
+                    <Text className="font-bold">{t('Until')}:</Text>
+                    <Text>{format(new Date(task.until * 1000), 'do LLL yyyy, HH:mm')}</Text>
+                  </View> 
+                  :
+                  null
+                }
               </View> 
-              :
-              null
-            }
-          </View>
+            </> 
+            :
+            <Text>{t('Task not found')}</Text>
+          }
         </View>
       }
     </PageWrapper>
