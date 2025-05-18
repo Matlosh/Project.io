@@ -83,7 +83,7 @@ export function TaskForm({
       categoryId: fields.categoryId.value,
       description: fields.description.value,
       showUntil: fields.showUntil.value,
-      until: fields.showUntil.value,
+      until: fields.until.value,
       important: fields.important.value,
       id: taskId
     });

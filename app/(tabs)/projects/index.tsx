@@ -8,7 +8,6 @@ import { PageWrapper } from "~/components/PageWrapper";
 import { TopBar } from "~/components/TopBar";
 import { UpdateContext } from "~/components/providers/UpdateProvider";
 import { Card, CardHeader, CardTitle } from "~/components/ui/card";
-import { useDynamicReload } from "~/hooks/useDynamicReload";
 import { useThemeColor } from "~/hooks/useThemeColor";
 import { Project } from "~/lib/database";
 import { CirclePlus } from "~/lib/icons/CirclePlus";
@@ -18,16 +17,11 @@ export default function Projects() {
   const { colorOptions } = useThemeColor();
   const db = useSQLiteContext();
   const router = useRouter();
-  const { reloadEntries } = useDynamicReload();
   const { t } = useTranslation('translation');
   const { data: projects, isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: () => getProjects(db)
   });
-
-  useEffect(() => {
-    console.log('updateEntries', reloadEntries);
-  }, [reloadEntries]);
 
   return (
     <PageWrapper>

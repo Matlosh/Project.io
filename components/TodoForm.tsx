@@ -46,6 +46,7 @@ export function TodoForm({
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      fields.title.reset();
     },
     onError: () => {
       setErrorMessage(tErrors('Saving failed. Please try again.'));

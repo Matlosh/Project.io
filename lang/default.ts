@@ -81,6 +81,8 @@ const defaultLang = {
       'required': ''
     },
     'Saving failed. Please try again.': '',
+    'Operation failed. Please try again.': '',
+    'Something went wrong. Please try again.': ''
   },
   errors: {
     'Task not found.': ''

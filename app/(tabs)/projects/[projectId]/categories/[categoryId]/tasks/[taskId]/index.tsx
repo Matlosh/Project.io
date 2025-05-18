@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { PageWrapper } from "~/components/PageWrapper";
 import { TopBar } from "~/components/TopBar";
@@ -14,13 +14,13 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { TodoForm } from "~/components/TodoForm";
 import { Trash2 } from "~/lib/icons/Trash2";
-import { useDynamicReload } from "~/hooks/useDynamicReload";
 import { Separator } from "~/components/ui/separator";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteTodo, getTodos } from "~/queries/todos";
+import { deleteTodo, getTodos, markTodoStatus } from "~/queries/todos";
 import { getTask } from "~/queries/tasks";
+import { z } from "zod";
 
 function TodoEntry({
   todo,
@@ -29,79 +29,57 @@ function TodoEntry({
   todo: Todo,
   onDelete: (todoId: number) => void
 }) {
-  const [checked, setChecked] = useState(!!todo.done);
+  const { t: tErrors } = useTranslation('form_errors');
+
   const db = useSQLiteContext();
   const { colorOptions } = useThemeColor();
-  const { sendDynamicReload } = useDynamicReload();
+
+  const queryClient = useQueryClient();
+
+  const markAsDoneSchema = useMemo(() => z.object({
+    taskId: z.string(),
+    checked: z.boolean(),
+    id: z.string()
+  }), []);
+
+  const markAsDoneMutation = useMutation({
+    mutationFn: (data: z.infer<typeof markAsDoneSchema>) => markTodoStatus(db, data),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });      
+      queryClient.invalidateQueries({ queryKey: ['todosInfo'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: () => {
+      showToast(tErrors('Operation failed. Please try again.'));
+    }
+  });
 
   const onTodoDoneChange = (checked: boolean) => {
-    setChecked(checked);
+    const data = markAsDoneSchema.safeParse({
+      taskId: todo.task_id.toString(),
+      checked: checked,
+      id: todo.id.toString()
+    });
 
-    (async () => {
-      try {
-        await db.runAsync(`
-          UPDATE todos SET done = ? WHERE id = ?;
-          UPDATE tasks SET finished =
-            ((SELECT COUNT(id) FROM todos WHERE done = 0) = 0)
-            WHERE id = ?;
-        `, [+checked, todo.id, todo.task_id, todo.task_id]);
+    if(!data.success) {
+      showToast(tErrors('Something went wrong. Please try again.'));
+      return;
+    }
 
-        sendDynamicReload([
-          {
-            key: 'todos',
-            state: 'update',
-            values: [todo.id.toString()]
-          },
-          {
-            key: 'tasks',
-            state: 'update',
-            values: [todo.task_id.toString()]
-          }
-        ]);
-      } catch(err) {
-        showToast(`Failed to change todo's status.`)
-      }
-    })();
-  };
-
-  const onTodoDelete = () => {
-    onDelete(todo.id);
-    
-    (async () => {
-      try {
-        await db.runAsync(`
-          DELETE FROM todos WHERE id = ?
-        `, [todo.id]);
-
-        sendDynamicReload([
-          {
-            key: 'todos',
-            state: 'delete',
-            values: [todo.id.toString()]
-          },
-          {
-            key: 'tasks',
-            state: 'update',
-            values: [todo.task_id.toString()]
-          }
-        ]);
-      } catch(err) {
-        showToast(`Failed to remove todo.`);
-      }
-    })();
+    markAsDoneMutation.mutate(data.data);
   };
 
   return (
     <View className="flex flex-row gap-2">
       <Checkbox
-        checked={checked}
+        checked={markAsDoneMutation.variables ? !!markAsDoneMutation.variables.checked : !!todo.done}
         onCheckedChange={onTodoDoneChange}
       />
       <View className="flex flex-col">
         <Label>{todo.title}</Label>
       </View>
       <Pressable
-        onPress={() => onTodoDelete()}
+        onPress={() => onDelete(todo.id)}
         className="ml-auto mb-auto">
         <View className="w-6 h-6 bg-red-500 flex items-center justify-center rounded-md">
           <Trash2
@@ -140,7 +118,10 @@ export default function TaskPage() {
 
   const deleteTodoMutation = useMutation({
     mutationFn: (todoId: string) => deleteTodo(db, todoId),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['todos'] })
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    }
   });
 
   return (

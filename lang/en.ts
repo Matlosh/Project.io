@@ -82,7 +82,9 @@ const en: defaultLang = {
     'categoryId': {
       'required': 'Category ID is required'
     },
-    'Saving failed. Please try again.': 'Saving failed. Please try again.'
+    'Saving failed. Please try again.': 'Saving failed. Please try again.',
+    'Operation failed. Please try again.': 'Operation failed. Please try again.',
+    'Something went wrong. Please try again.': 'Something went wrong. Please try again.' 
   },
   errors: {
     'Task not found.': 'Task not found.'
