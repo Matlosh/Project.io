@@ -11,7 +11,7 @@ export default function CategoriesLayout() {
       />
 
       <Stack.Screen
-        name='create'
+        name='form'
         options={{
           headerShown: false
         }}

@@ -84,7 +84,7 @@ function TodoEntry({
         <View className="w-6 h-6 bg-red-500 flex items-center justify-center rounded-md">
           <Trash2
             width={14}
-            color={colorOptions.text} />   
+            color={colorOptions.background} />   
         </View>      
       </Pressable>
     </View>
@@ -107,7 +107,7 @@ export default function TaskPage() {
   const queryClient = useQueryClient();
 
   const { data: task, isLoading: isTaskLoading } = useQuery({
-    queryKey: ['task', taskId],
+    queryKey: ['tasks', taskId],
     queryFn: () => getTask(db, taskId)
   });
 

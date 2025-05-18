@@ -12,28 +12,114 @@ import { useThemeColor } from "~/hooks/useThemeColor";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import { getExtendedCategories } from "~/queries/categories";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteCategory, getExtendedCategories } from "~/queries/categories";
 import { getProject } from "~/queries/projects";
+import { Dialog, DialogDescription, DialogHeader } from "~/components/ui/dialog";
+import { ChoiceDialog } from "~/components/custom-ui/choice-dialog";
+import { Button } from "~/components/ui/button";
+import { ConfirmationDialog } from "~/components/custom-ui/confirmation-dialog";
 
 export type ExtendedCategory = Category & {
   active_tasks_count: number
 };
 
-export default function ProjectPage() {
+function CategoryEntry({
+  category,
+  onDelete
+}: {
+  category: ExtendedCategory,
+  onDelete: (categoryId: string) => void
+}) {
   const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
+  const { t: tModals } = useTranslation('translation', { keyPrefix: 'modals' });
+
+  const router = useRouter();
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [confirmationVisible, setConfirmationVisible] = useState(false);
+
+  return (
+    <View className="w-full">
+      <Pressable
+        key={category.id}
+        className="w-full"
+        onPress={() => router.push(`/projects/${category.project_id}/categories/${category.id}`)}
+        onLongPress={() => setModalVisible(true)}>
+        <Card
+          className="w-full">
+          <CardHeader
+            style={{borderColor: category.color}}
+            className="border-l-2">
+            <CardTitle>{category.title}</CardTitle>
+            <CardDescription>{t('Active tasks')}: {category.active_tasks_count}</CardDescription>
+          </CardHeader>
+        </Card>
+      </Pressable>
+
+      <ChoiceDialog
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}>
+        <Button onPress={() => setModalVisible(false)}>
+          <Text>{tModals('Close')}</Text>
+        </Button>
+
+        <Button
+          className="bg-yellow-500"
+          onPress={() => {
+            setModalVisible(false);
+            router.push(`/projects/${category.project_id}/categories/form?action=update&categoryId=${category.id}`);
+          }}>
+          <Text>{tModals('Edit')}</Text>
+        </Button>
+
+        <Button
+          className="bg-red-500"
+          onPress={() => setConfirmationVisible(true)}>
+          <Text>{tModals('Delete')}</Text>
+        </Button>
+      </ChoiceDialog>
+
+      <ConfirmationDialog
+        description={tModals('Are you sure?')}
+        modalVisible={confirmationVisible}
+        onConfirm={() => {
+          setConfirmationVisible(false);
+          onDelete(category.id.toString());
+          setModalVisible(false);
+        }}
+        onDeny={() => setConfirmationVisible(false)}
+      />
+    </View>
+  );
+}
+
+export default function ProjectPage() {
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const { colorOptions } = useThemeColor();
   const db = useSQLiteContext();
   const router = useRouter();
+  const queryClient = useQueryClient();
+
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery({
-    queryKey: ['project', projectId],
+    queryKey: ['projects', projectId],
     queryFn: () => getProject(db, projectId)
   });
 
   const { data: categories, isLoading: areCategoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['categories', 'extended', projectId],
     queryFn: () => getExtendedCategories(db, projectId)
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (categoryId: string) => deleteCategory(db, categoryId),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+    onError: () => {
+      showToast('Operation failed. Please try again.'); 
+    }
   });
 
   useEffect(() => {
@@ -50,7 +136,7 @@ export default function ProjectPage() {
         headerRight={
           <CirclePlus
             color={colorOptions.text}
-            onPress={() => router.push(`/projects/${projectId}/categories/create`)} />
+            onPress={() => router.push(`/projects/${projectId}/categories/form`)} />
         } />
 
       {isProjectLoading && areCategoriesLoading ?
@@ -60,20 +146,10 @@ export default function ProjectPage() {
         :
         <>
           {categories && categories.map(category => (
-            <Pressable
+            <CategoryEntry
               key={category.id}
-              className="w-full"
-              onPress={() => router.push(`/projects/${projectId}/categories/${category.id}`)}>
-              <Card
-                className="w-full">
-                <CardHeader
-                  style={{borderColor: category.color}}
-                  className="border-l-2">
-                  <CardTitle>{category.title}</CardTitle>
-                  <CardDescription>{t('Active tasks')}: {category.active_tasks_count}</CardDescription>
-                </CardHeader>
-              </Card>
-            </Pressable>
+              category={category}
+              onDelete={(categoryId: string) => deleteMutation.mutate(categoryId)} />
           ))}
         </>
       }

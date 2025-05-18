@@ -11,7 +11,7 @@ export default function ProjectsLayout() {
       />
 
       <Stack.Screen
-        name='create'
+        name='form'
         options={{
           headerShown: false
         }}

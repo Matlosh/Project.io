@@ -13,7 +13,6 @@ import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { migrateDbIfNeeded } from '~/lib/database';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { UpdateProvider } from '~/components/providers/UpdateProvider';
 import "~/lib/i18n";
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { showToast } from '~/lib/utils';
@@ -77,19 +76,17 @@ export default function RootLayout() {
         <GestureHandlerRootView>
           <QueryClientProvider client={queryClient}>
             <SQLiteProvider databaseName='project_io.db' onInit={migrateDbIfNeeded}>
-              <UpdateProvider>
-                <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-                <Stack>
-                  <Stack.Screen
-                    name='(tabs)'
-                    options={{
-                      title: 'Project.io',
-                      headerShown: false
-                    }}
-                  />
-                </Stack>
-                <PortalHost />
-              </UpdateProvider>
+              <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
+              <Stack>
+                <Stack.Screen
+                  name='(tabs)'
+                  options={{
+                    title: 'Project.io',
+                    headerShown: false
+                  }}
+                />
+              </Stack>
+              <PortalHost />
             </SQLiteProvider>
           </QueryClientProvider>
         </GestureHandlerRootView>

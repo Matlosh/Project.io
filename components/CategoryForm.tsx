@@ -15,15 +15,18 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod"; 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { insertCategory, updateCategory } from "~/queries/categories";
+import { Category } from "~/lib/database";
 
 export function CategoryForm({
   formType = 'create',
   projectId,
-  categoryId
+  categoryId,
+  category
 }: {
   formType?: 'create' | 'update',
   projectId: string,
-  categoryId?: string
+  categoryId?: string,
+  category?: Category
 }) {
   const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
   const { t: tFields } = useTranslation('translation', { keyPrefix: 'form_fields' });
@@ -45,8 +48,8 @@ export function CategoryForm({
   const [errorMessage, setErrorMessage] = useState('');
 
   const fields = {
-    title: useFormInput('', 'title'),
-    color: useFormInput(colorScheme === 'dark' ? '#ffffff' : '#000000', 'color')
+    title: useFormInput(category ? category.title : '', 'title'),
+    color: useFormInput(category ? category.color : (colorScheme === 'dark' ? '#ffffff' : '#000000'), 'color')
   };
 
   const insertMutation = useMutation({

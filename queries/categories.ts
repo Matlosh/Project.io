@@ -35,3 +35,9 @@ export const updateCategory = async (db: SQLiteDatabase, category: any): Promise
 
   return result.lastInsertRowId;
 };
+
+export const deleteCategory = async (db: SQLiteDatabase, categoryId: string): Promise<void> => {
+  await db.runAsync(`
+    DELETE FROM categories WHERE id = ?
+  `, [categoryId]);
+};

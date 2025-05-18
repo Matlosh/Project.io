@@ -19,6 +19,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteTask, getTasks } from "~/queries/tasks";
 import { getCategory } from "~/queries/categories";
 import { getTodosInfo, TodosInfo } from "~/queries/todos";
+import { ChoiceDialog } from "~/components/custom-ui/choice-dialog";
 
 function TaskEntry({
   task,
@@ -77,39 +78,28 @@ function TaskEntry({
             </Card>
           </Pressable>
 
-          <Dialog
-            open={modalVisible}
-            onOpenChange={setModalVisible}>
-            <DialogContent className="w-[300px]">
-              <DialogHeader>
-                <DialogDescription>
-                  {tModals('What do you want to do?')}
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <DialogClose className="flex flex-col gap-2">
-                  <Button onPress={() => setModalVisible(false)}>
-                    <Text>{tModals('Close')}</Text>
-                  </Button>
+          <ChoiceDialog
+            modalVisible={modalVisible}
+            setModalVisible={setModalVisible}>
+            <Button onPress={() => setModalVisible(false)}>
+              <Text>{tModals('Close')}</Text>
+            </Button>
 
-                  <Button
-                    className="bg-yellow-500"
-                    onPress={() => {
-                      setModalVisible(false);
-                      router.push(`/projects/${projectId}/categories/${categoryId}/tasks/form?action=update&taskId=${task.id}`);
-                    }}>
-                    <Text>{tModals('Edit')}</Text>
-                  </Button>
+            <Button
+              className="bg-yellow-500"
+              onPress={() => {
+                setModalVisible(false);
+                router.push(`/projects/${projectId}/categories/${categoryId}/tasks/form?action=update&taskId=${task.id}`);
+              }}>
+              <Text>{tModals('Edit')}</Text>
+            </Button>
 
-                  <Button
-                    className="bg-red-500"
-                    onPress={() => setConfirmationVisible(true)}>
-                    <Text>{tModals('Delete')}</Text>
-                  </Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            <Button
+              className="bg-red-500"
+              onPress={() => setConfirmationVisible(true)}>
+              <Text>{tModals('Delete')}</Text>
+            </Button>
+          </ChoiceDialog>
 
           <ConfirmationDialog
             description={tModals('Are you sure?')}
@@ -137,7 +127,7 @@ export default function CategoryPage() {
   const { colorOptions } = useThemeColor();
 
   const { data: category, isLoading: isCategoryLoading, error: categoryError } = useQuery({
-    queryKey: ['category', categoryId],
+    queryKey: ['categories', categoryId],
     queryFn: () => getCategory(db, categoryId)
   });
 
@@ -145,7 +135,7 @@ export default function CategoryPage() {
   const fetchedCategoryId = category?.id;
 
   const { data: tasks, isLoading: areTasksLoading, error: tasksError, refetch: refetchTasks } = useQuery({
-    queryKey: ['tasks', categoryId],
+    queryKey: ['tasks', 'fromCategory', categoryId],
     queryFn: () => getTasks(db, categoryId),
     enabled: !!fetchedCategoryId
   });
@@ -153,7 +143,7 @@ export default function CategoryPage() {
   const deleteTaskMutation = useMutation({
     mutationFn: (taskId: string) => deleteTask(db, taskId),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', categoryId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'fromCategory'] });
     }
   });
 

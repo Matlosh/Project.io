@@ -89,7 +89,7 @@ export function TodoForm({
       <View className="w-full flex flex-row gap-2 items-center">
         <Pressable onPress={() => save()}>
           <View className="w-10 h-10 bg-green-500 flex items-center justify-center rounded-md">
-            <Plus color={colorOptions.text} />   
+            <Plus color={colorOptions.background} />   
           </View>      
         </Pressable>
 

@@ -32,3 +32,9 @@ export const updateProject = async (db: SQLiteDatabase, project: any): Promise<n
 
   return result.lastInsertRowId;
 };
+
+export const deleteProject = async (db: SQLiteDatabase, projectId: string): Promise<void> => {
+  await db.runAsync(`
+    DELETE FROM projects WHERE id = ?
+  `, [projectId]); 
+};

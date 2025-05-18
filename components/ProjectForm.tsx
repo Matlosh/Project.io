@@ -15,13 +15,16 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { insertProject, updateProject } from "~/queries/projects";
+import { Project } from "~/lib/database";
 
 export function ProjectForm({
   formType = 'create',
-  projectId
+  projectId,
+  project
 }: {
   formType?: 'create' | 'update',
-  projectId?: string
+  projectId?: string,
+  project?: Project
 }) {
   const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
   const { t: tFields } = useTranslation('translation', { keyPrefix: 'form_fields' });
@@ -41,8 +44,8 @@ export function ProjectForm({
   const [showColorPickerModal, setShowColorPickerModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const fields = {
-    title: useFormInput('', 'title'),
-    color: useFormInput(colorScheme === 'dark' ? '#ffffff' : '#000000', 'color')
+    title: useFormInput(project ? project.title : '', 'title'),
+    color: useFormInput(project ? project.color : (colorScheme === 'dark' ? '#ffffff' : '#000000'), 'color')
   };
 
   const insertMutation = useMutation({

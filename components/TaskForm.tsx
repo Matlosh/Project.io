@@ -7,7 +7,7 @@ import { Label } from "./ui/label";
 import { useFormInput } from "~/hooks/useFormInput";
 import { useSQLiteContext } from "expo-sqlite";
 import { useRouter } from "expo-router";
-import { Category } from "~/lib/database";
+import { Category, Task } from "~/lib/database";
 import { Textarea } from "./ui/textarea";
 import { Switch } from "./ui/switch";
 import DatePicker from "react-native-date-picker";
@@ -20,11 +20,13 @@ import { insertTask, updateTask } from "~/queries/tasks";
 export function TaskForm({
   categoryId,
   formType = 'create',
-  taskId 
+  taskId,
+  task 
 }: {
   categoryId: string,
   formType?: 'create' | 'update',
-  taskId?: string
+  taskId?: string,
+  task?: Task
 }) {
   const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
   const { t: tFields } = useTranslation('translation', { keyPrefix: 'form_fields' });
@@ -46,12 +48,12 @@ export function TaskForm({
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState('');
   const fields = {
-    title: useFormInput('', 'title'),
+    title: useFormInput(task ? task.title : '', 'title'),
     categoryId: useFormInput(categoryId, 'category_id'),
-    description: useFormInput('', 'description'),
-    showUntil: useFormInput(false, 'show_until'),
-    until: useFormInput<Date>(new Date(), 'until'),
-    important: useFormInput(false, 'important')
+    description: useFormInput(task ? task.description : '', 'description'),
+    showUntil: useFormInput(task ? !!task.is_until : false, 'show_until'),
+    until: useFormInput<Date>(task ? new Date(task.until) : new Date(), 'until'),
+    important: useFormInput(task ? !!task.important : false, 'important')
   };
   const [showDatePicker, setShowDatePicker] = useState(false);
 
