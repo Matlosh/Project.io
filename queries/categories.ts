@@ -16,7 +16,7 @@ export const getCategory = async (db: SQLiteDatabase, categoryId: string): Promi
 
 export const getExtendedCategories = async (db: SQLiteDatabase, projectId: string): Promise<ExtendedCategory[]> => {
   return await db.getAllAsync<ExtendedCategory>(`
-    SELECT categories.*, (SELECT COUNT(id) FROM tasks WHERE finished = 1 AND category_id = categories.id) AS active_tasks_count FROM categories WHERE project_id = ? 
+    SELECT categories.*, (SELECT COUNT(id) FROM tasks WHERE finished = 0 AND category_id = categories.id) AS active_tasks_count FROM categories WHERE project_id = ? 
   `, [projectId]); 
 };
 

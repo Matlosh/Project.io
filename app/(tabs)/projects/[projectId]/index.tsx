@@ -37,7 +37,7 @@ function CategoryEntry({
   const router = useRouter();
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [confirmationVisible, setConfirmationVisible] = useState(false);
+  const [confirmationVisible, setConfirmationVisible] = useState(false); 
 
   return (
     <View className="w-full">
@@ -50,7 +50,7 @@ function CategoryEntry({
           className="w-full">
           <CardHeader
             style={{borderColor: category.color}}
-            className="border-l-2">
+            className="border-l-2 rounded-lg">
             <CardTitle>{category.title}</CardTitle>
             <CardDescription>{t('Active tasks')}: {category.active_tasks_count}</CardDescription>
           </CardHeader>

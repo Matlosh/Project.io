@@ -62,10 +62,15 @@ export async function deleteTodo(db: SQLiteDatabase, todoId: string): Promise<vo
 
 // Sets the task as finished if all todos are done
 export async function markTodoStatus(db: SQLiteDatabase, data: any): Promise<void> {
-  await db.runAsync(`
-    UPDATE todos SET done = ? WHERE id = ?;
-    UPDATE tasks SET finished =
-      ((SELECT COUNT(id) FROM todos WHERE done = 0) = 0)
-      WHERE id = ?;
-  `, [+data.checked, data.id, data.taskId, data.taskId]);
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(`
+      UPDATE todos SET done = ? WHERE id = ?;
+    `, [+data.checked, data.id]);
+
+    await db.runAsync(`
+      UPDATE tasks SET finished =
+        ((SELECT COUNT(id) FROM todos WHERE done = 0 AND task_id = ?) = 0)
+        WHERE id = ?;
+    `, [data.taskId, data.taskId]);
+  });
 }

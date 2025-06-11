@@ -9,6 +9,9 @@ import { Text } from "~/components/ui/text";
 import { Category, Task, Todo } from "~/lib/database";
 import { cn, showToast } from "~/lib/utils";
 import { CirclePlus } from "~/lib/icons/CirclePlus";
+import { Clock9 } from "~/lib/icons/Clock9";
+import { CheckCheck } from "~/lib/icons/CheckCheck";
+import { Check } from "~/lib/icons/Check";
 import { useThemeColor } from "~/hooks/useThemeColor";
 import { format } from "date-fns";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
@@ -39,6 +42,7 @@ function TaskEntry({
   const [untilDate, setUntilDate] = useState<Date>(new Date(task.until * 1000)); 
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmationVisible, setConfirmationVisible] = useState(false);
+  const { colorOptions } = useThemeColor();
 
   const { data: todosInfo, isPending } = useQuery({
     queryKey: ['todos', 'todosInfo', task.id],
@@ -56,21 +60,55 @@ function TaskEntry({
             <Card className={cn("w-full", task.important && "border-l-[1px] border-red-500")}>
               <CardHeader>
                 <Text className="text-lg font-bold">{task.title}</Text>
-                <CardDescription>{t('Completed')}: {todosInfo.completed}/{todosInfo.available} ({todosInfo.available > 0 ? (todosInfo.completed * 100 / todosInfo.available).toFixed(2) : 100}%)</CardDescription>
+                <CardDescription>
+                  <View className="flex flex-row items-center gap-1">
+                    <CheckCheck
+                      size={12}
+                      color={colorOptions.text}
+                    />
+
+                    <Text className="text-sm">
+                      {todosInfo.completed}/{todosInfo.available} ({todosInfo.available > 0 ? (todosInfo.completed * 100 / todosInfo.available).toFixed(2) : 100}%)
+                    </Text>
+                  </View>
+                </CardDescription>
                 {task.is_until ? 
                   <CardDescription
-                    className={cn(untilDate < new Date() && "text-red-500")}>{t('Until')}: {format(untilDate, 'do LLL yyyy, HH:mm')}</CardDescription>
-                  :
-                  null
-                }
-                {task.finished ?
-                  <CardDescription className="text-red-500">{t('Finished')}</CardDescription>
+                    className={cn(
+                      untilDate < new Date() && "text-red-500"
+                    )}>
+                      <View className="flex flex-row items-center gap-1 text-blue-500">
+                        <Clock9
+                          size={12}
+                          className={cn(
+                            untilDate < new Date() && "text-red-500"
+                          )}
+                          color={colorOptions.text} />
+
+                        <Text className={cn(
+                            "text-sm",
+                            untilDate < new Date() && "text-red-500"
+                          )}>
+                          {format(untilDate, 'LLL do, HH:mm')}
+                        </Text>
+                      </View>
+                    </CardDescription>
                   :
                   null
                 }
                 {todosInfo.available === todosInfo.completed || task.finished ?
-                  <CardDescription
-                    className="text-green-500">{t('Finished')}</CardDescription>
+                  <CardDescription>
+                      <View className="flex flex-row items-center gap-1">
+                        <Check
+                        size={12}
+                        className="text-green-500"
+                        />
+
+                      <Text className="text-green-500 text-sm">
+                        {t('Finished')}
+                      </Text>
+                    </View>
+                  </CardDescription>
                   :
                   null
                 }

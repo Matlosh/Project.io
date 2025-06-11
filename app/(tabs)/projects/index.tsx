@@ -40,7 +40,7 @@ function ProjectEntry({
           className="w-full">
           <CardHeader
             style={{borderColor: project.color}}
-            className="border-l-2">
+            className="border-l-2 rounded-lg">
             <CardTitle>{project.title}</CardTitle>
           </CardHeader>
         </Card>

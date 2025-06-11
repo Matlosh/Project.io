@@ -51,6 +51,7 @@ export const updateTask = async (db: SQLiteDatabase, task: any): Promise<number>
 
 export const deleteTask = async (db: SQLiteDatabase, taskId: string): Promise<void> => {
   await db.runAsync(`
+    DELETE FROM todos WHERE task_id = ?
     DELETE FROM tasks WHERE id = ?
-  `, taskId); 
+  `, [taskId, taskId]); 
 };

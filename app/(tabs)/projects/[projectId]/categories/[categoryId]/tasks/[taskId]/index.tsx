@@ -48,6 +48,7 @@ function TodoEntry({
       queryClient.invalidateQueries({ queryKey: ['todos'] });      
       queryClient.invalidateQueries({ queryKey: ['todosInfo'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['categories', 'extended'] });
     },
     onError: () => {
       showToast(tErrors('Operation failed. Please try again.'));
