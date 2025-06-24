@@ -15,6 +15,7 @@ import { useThemeColor } from "~/hooks/useThemeColor";
 import { Project } from "~/lib/database";
 import { CirclePlus } from "~/lib/icons/CirclePlus";
 import { deleteProject, getProjects } from "~/queries/projects";
+import { Separator } from "~/components/ui/separator";
 
 function ProjectEntry({
   project,
@@ -36,14 +37,13 @@ function ProjectEntry({
         className="w-full"
         onPress={() => router.push(`/projects/${project.id}`)}
         onLongPress={() => setModalVisible(true)}>
-        <Card
-          className="w-full">
-          <CardHeader
-            style={{borderColor: project.color}}
-            className="border-l-2 rounded-lg">
-            <CardTitle>{project.title}</CardTitle>
-          </CardHeader>
-        </Card>
+        <View className="flex flex-row gap-2 items-center">
+          <View
+            className="w-4 h-4 bg-foreground rounded-full"
+            style={{ backgroundColor: project.color }}></View>
+          <Text className="text-xl font-bold">{project.title}</Text>
+        </View>
+        <Separator className="mt-2" />
       </Pressable>
 
       <ChoiceDialog

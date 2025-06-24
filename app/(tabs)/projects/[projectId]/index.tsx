@@ -19,6 +19,7 @@ import { Dialog, DialogDescription, DialogHeader } from "~/components/ui/dialog"
 import { Button } from "~/components/ui/button";
 import { ChoiceDialog } from "~/components/ui/choice-dialog";
 import { ConfirmationDialog } from "~/components/ui/confirmation-dialog";
+import { Separator } from "~/components/ui/separator";
 
 export type ExtendedCategory = Category & {
   active_tasks_count: number
@@ -46,15 +47,14 @@ function CategoryEntry({
         className="w-full"
         onPress={() => router.push(`/projects/${category.project_id}/categories/${category.id}`)}
         onLongPress={() => setModalVisible(true)}>
-        <Card
-          className="w-full">
-          <CardHeader
-            style={{borderColor: category.color}}
-            className="border-l-2 rounded-lg">
-            <CardTitle>{category.title}</CardTitle>
-            <CardDescription>{t('Active tasks')}: {category.active_tasks_count}</CardDescription>
-          </CardHeader>
-        </Card>
+        <View className="flex flex-row gap-2 items-center">
+          <View
+            className="w-4 h-4 bg-foreground rounded-full"
+            style={{ backgroundColor: category.color }}></View>
+          <Text className="text-xl font-bold">{category.title}</Text>
+        </View>
+        <Text className="text-sm text-foreground/60">{t('Active tasks')}: {category.active_tasks_count}</Text>
+        <Separator className="mt-2" />
       </Pressable>
 
       <ChoiceDialog

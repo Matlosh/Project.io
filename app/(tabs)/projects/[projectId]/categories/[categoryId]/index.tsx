@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Animated, Modal, Pressable, View } from "react-native";
 import { PageWrapper } from "~/components/PageWrapper";
 import { TopBar } from "~/components/TopBar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
@@ -24,6 +24,7 @@ import { getTodosInfo, TodosInfo } from "~/queries/todos";
 import { Separator } from "~/components/ui/separator";
 import { ConfirmationDialog } from "~/components/ui/confirmation-dialog";
 import { ChoiceDialog } from "~/components/ui/choice-dialog";
+import { SwitchMenu } from "~/components/ui/switch-menu";
 
 function TaskEntry({
   task,
@@ -166,6 +167,7 @@ export default function CategoryPage() {
   const db = useSQLiteContext();
   const { colorOptions } = useThemeColor();
   const [offset, setOffset] = useState(0);
+  const [showActive, setShowActive] = useState(true);
 
   const { data: category, isLoading: isCategoryLoading, error: categoryError } = useSuspenseQuery({
     queryKey: ['categories', categoryId],
@@ -206,29 +208,47 @@ export default function CategoryPage() {
         }
       />
 
-      <Text className="uppercase text-base font-bold">{t('To Do')}</Text>
-      {tasks && tasks.map(task => (
-        <TaskEntry
-          key={task.id}
-          task={task}
-          projectId={projectId}
-          categoryId={categoryId}
-          onDelete={(taskId: string) => deleteTaskMutation.mutate(taskId)}
-        />            
-      ))}
+      <SwitchMenu
+        entries={[
+          {
+            label: t('To Do'),
+            onPress: () => {
+              setShowActive(true);
+            }
+          },
+          {
+            label: t('Finished'),
+            onPress: () => {
+              setShowActive(false);
+            }
+          }
+        ]} />
 
-      <Separator />
-      <Text className="uppercase text-base font-bold">{t('Completed')}</Text>
-
-      {finishedTasks && finishedTasks.map(task => (
-        <TaskEntry
-          key={task.id}
-          task={task}
-          projectId={projectId}
-          categoryId={categoryId}
-          onDelete={(taskId: string) => deleteTaskMutation.mutate(taskId)}
-        />            
-      ))} 
+      {showActive ? (
+        <>
+          {tasks && tasks.map(task => (
+            <TaskEntry
+              key={task.id}
+              task={task}
+              projectId={projectId}
+              categoryId={categoryId}
+              onDelete={(taskId: string) => deleteTaskMutation.mutate(taskId)}
+            />            
+          ))}
+        </>
+      ) : (
+        <>
+          {finishedTasks && finishedTasks.map(task => (
+            <TaskEntry
+              key={task.id}
+              task={task}
+              projectId={projectId}
+              categoryId={categoryId}
+              onDelete={(taskId: string) => deleteTaskMutation.mutate(taskId)}
+            />            
+          ))}
+        </>
+      )}  
     </PageWrapper>
   );
 }
