@@ -4,7 +4,7 @@ import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation
 import { Stack, Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
-import { Platform } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
 import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/hooks/useColorScheme';
 import { PortalHost } from '@rn-primitives/portal';
@@ -46,6 +46,14 @@ export {
   ErrorBoundary,
 } from 'expo-router';
 
+function Loading() {
+  return (
+    <View className="w-full h-full justify-center items-center">
+      <ActivityIndicator size="large" /> 
+    </View>  
+  )
+}
+
 export default function RootLayout() {
   const hasMounted = React.useRef(false);
   const { colorScheme, isDarkColorScheme } = useColorScheme();
@@ -76,17 +84,19 @@ export default function RootLayout() {
         <GestureHandlerRootView>
           <QueryClientProvider client={queryClient}>
             <SQLiteProvider databaseName='project_io.db' onInit={migrateDbIfNeeded}>
-              <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-              <Stack>
-                <Stack.Screen
-                  name='(tabs)'
-                  options={{
-                    title: 'Project.io',
-                    headerShown: false
-                  }}
-                />
-              </Stack>
-              <PortalHost />
+              <React.Suspense fallback={<Loading />}>
+                <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
+                <Stack>
+                  <Stack.Screen
+                    name='(tabs)'
+                    options={{
+                      title: 'Project.io',
+                      headerShown: false
+                    }}
+                  />
+                </Stack>
+                <PortalHost />
+              </React.Suspense>
             </SQLiteProvider>
           </QueryClientProvider>
         </GestureHandlerRootView>

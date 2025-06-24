@@ -1,6 +1,6 @@
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
-import { Text } from "../ui/text";
+import { Text } from "./text";
 
 export function ConfirmationDialog({
   description,

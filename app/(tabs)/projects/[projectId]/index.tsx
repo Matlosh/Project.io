@@ -12,13 +12,13 @@ import { useThemeColor } from "~/hooks/useThemeColor";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useTranslation } from "react-i18next";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { deleteCategory, getExtendedCategories } from "~/queries/categories";
 import { getProject } from "~/queries/projects";
 import { Dialog, DialogDescription, DialogHeader } from "~/components/ui/dialog";
-import { ChoiceDialog } from "~/components/custom-ui/choice-dialog";
 import { Button } from "~/components/ui/button";
-import { ConfirmationDialog } from "~/components/custom-ui/confirmation-dialog";
+import { ChoiceDialog } from "~/components/ui/choice-dialog";
+import { ConfirmationDialog } from "~/components/ui/confirmation-dialog";
 
 export type ExtendedCategory = Category & {
   active_tasks_count: number
@@ -101,12 +101,12 @@ export default function ProjectPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery({
+  const { data: project, isLoading: isProjectLoading, error: projectError } = useSuspenseQuery({
     queryKey: ['projects', projectId],
     queryFn: () => getProject(db, projectId)
   });
 
-  const { data: categories, isLoading: areCategoriesLoading, error: categoriesError } = useQuery({
+  const { data: categories, isLoading: areCategoriesLoading, error: categoriesError } = useSuspenseQuery({
     queryKey: ['categories', 'extended', projectId],
     queryFn: () => getExtendedCategories(db, projectId)
   });
@@ -139,20 +139,12 @@ export default function ProjectPage() {
             onPress={() => router.push(`/projects/${projectId}/categories/form`)} />
         } />
 
-      {isProjectLoading && areCategoriesLoading ?
-        <View className="w-full h-full justify-center items-center">
-          <ActivityIndicator size="large" /> 
-        </View>  
-        :
-        <>
-          {categories && categories.map(category => (
-            <CategoryEntry
-              key={category.id}
-              category={category}
-              onDelete={(categoryId: string) => deleteMutation.mutate(categoryId)} />
-          ))}
-        </>
-      }
+      {categories && categories.map(category => (
+        <CategoryEntry
+          key={category.id}
+          category={category}
+          onDelete={(categoryId: string) => deleteMutation.mutate(categoryId)} />
+      ))}
     </PageWrapper>
   );
 }

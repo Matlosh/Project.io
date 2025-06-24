@@ -1,11 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useGlobalSearchParams, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import { ChoiceDialog } from "~/components/custom-ui/choice-dialog";
-import { ConfirmationDialog } from "~/components/custom-ui/confirmation-dialog";
+import { ChoiceDialog } from "~/components/ui/choice-dialog";
+import { ConfirmationDialog } from "~/components/ui/confirmation-dialog";
 import { PageWrapper } from "~/components/PageWrapper";
 import { TopBar } from "~/components/TopBar";
 import { Button } from "~/components/ui/button";
@@ -91,7 +91,7 @@ export default function Projects() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data: projects, isLoading } = useQuery({
+  const { data: projects, isLoading } = useSuspenseQuery({
     queryKey: ['projects'],
     queryFn: () => getProjects(db)
   });
@@ -110,8 +110,6 @@ export default function Projects() {
         headerRight={<CirclePlus
           onPress={() => router.push('/projects/form')}
           color={colorOptions.text} />} />
-
-      {isLoading && <ActivityIndicator size="large" />}
 
       {projects && projects.map(project => (
         <ProjectEntry

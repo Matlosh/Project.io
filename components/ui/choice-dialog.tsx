@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader } from "../ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader } from "./dialog";
 
 export function ChoiceDialog({
   modalVisible,

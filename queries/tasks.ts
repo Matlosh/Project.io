@@ -19,6 +19,20 @@ export const getTasks = async (db: SQLiteDatabase, categoryId: string): Promise<
   `, categoryId);
 };
 
+// Returns all active tasks
+export const getActiveTasks = async (db: SQLiteDatabase, categoryId: string): Promise<Task[]> => {
+  return await db.getAllAsync<Task>(`
+    SELECT * FROM tasks WHERE category_id = ? AND finished = 0
+  `, categoryId);
+};
+
+// Returns some finished tasks (according to offset and limit)
+export const getFinishedTasks = async (db: SQLiteDatabase, categoryId: string, limit: number, offset: number): Promise<Task[]> => {
+  return await db.getAllAsync<Task>(`
+    SELECT * FROM tasks WHERE category_id = ? AND finished = 1 ORDER BY until DESC LIMIT ? OFFSET ?
+  `, [categoryId, limit, offset]);
+};
+
 export const insertTask = async (db: SQLiteDatabase, task: any): Promise<number> => {
   const result = await db.runAsync(`
     INSERT INTO tasks (category_id, title, description, is_until, until, important) VALUES(?, ?, ?, ?, ?, ?)

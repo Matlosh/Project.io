@@ -47,6 +47,7 @@ const defaultLang = {
       'Description': '',
       'Information about this task': '',
       'Full title': '',
+      'To Do': ''
     },
     settings: {
       'Theme': '',

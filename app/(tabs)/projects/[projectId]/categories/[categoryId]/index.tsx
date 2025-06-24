@@ -16,13 +16,14 @@ import { useThemeColor } from "~/hooks/useThemeColor";
 import { format } from "date-fns";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
-import { ConfirmationDialog } from "~/components/custom-ui/confirmation-dialog";
 import { useTranslation } from "react-i18next";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteTask, getTasks } from "~/queries/tasks";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { deleteTask, getActiveTasks, getFinishedTasks, getTasks } from "~/queries/tasks";
 import { getCategory } from "~/queries/categories";
 import { getTodosInfo, TodosInfo } from "~/queries/todos";
-import { ChoiceDialog } from "~/components/custom-ui/choice-dialog";
+import { Separator } from "~/components/ui/separator";
+import { ConfirmationDialog } from "~/components/ui/confirmation-dialog";
+import { ChoiceDialog } from "~/components/ui/choice-dialog";
 
 function TaskEntry({
   task,
@@ -44,7 +45,7 @@ function TaskEntry({
   const [confirmationVisible, setConfirmationVisible] = useState(false);
   const { colorOptions } = useThemeColor();
 
-  const { data: todosInfo, isPending } = useQuery({
+  const { data: todosInfo, isPending } = useSuspenseQuery({
     queryKey: ['todos', 'todosInfo', task.id],
     queryFn: () => getTodosInfo(db, task.id.toString())
   });
@@ -96,7 +97,7 @@ function TaskEntry({
                   :
                   null
                 }
-                {todosInfo.available === todosInfo.completed || task.finished ?
+                {task.finished ?
                   <CardDescription>
                       <View className="flex flex-row items-center gap-1">
                         <Check
@@ -160,11 +161,13 @@ export default function CategoryPage() {
     projectId: string,
     categoryId: string
   }>();
+  const { t } = useTranslation('translation', { keyPrefix: 'pages.projects' });
   const router = useRouter();
   const db = useSQLiteContext();
   const { colorOptions } = useThemeColor();
+  const [offset, setOffset] = useState(0);
 
-  const { data: category, isLoading: isCategoryLoading, error: categoryError } = useQuery({
+  const { data: category, isLoading: isCategoryLoading, error: categoryError } = useSuspenseQuery({
     queryKey: ['categories', categoryId],
     queryFn: () => getCategory(db, categoryId)
   });
@@ -172,9 +175,15 @@ export default function CategoryPage() {
   const queryClient = useQueryClient();
   const fetchedCategoryId = category?.id;
 
-  const { data: tasks, isLoading: areTasksLoading, error: tasksError, refetch: refetchTasks } = useQuery({
+  const { data: tasks, isLoading: areTasksLoading } = useQuery({
     queryKey: ['tasks', 'fromCategory', categoryId],
-    queryFn: () => getTasks(db, categoryId),
+    queryFn: () => getActiveTasks(db, categoryId),
+    enabled: !!fetchedCategoryId
+  });
+
+  const { data: finishedTasks, isLoading: areFinishedTasksLoading } = useQuery({
+    queryKey: ['tasks', 'finishedTasks', 'fromCategory', categoryId],
+    queryFn: () => getFinishedTasks(db, categoryId, 20, offset),
     enabled: !!fetchedCategoryId
   });
 
@@ -197,23 +206,29 @@ export default function CategoryPage() {
         }
       />
 
-      {areTasksLoading ?
-        <View className="w-full h-full justify-center items-center">
-          <ActivityIndicator size="large" /> 
-        </View>  
-        :
-        <>
-          {tasks && tasks.map(task => (
-            <TaskEntry
-              key={task.id}
-              task={task}
-              projectId={projectId}
-              categoryId={categoryId}
-              onDelete={(taskId: string) => deleteTaskMutation.mutate(taskId)}
-            />            
-          ))}
-        </>
-      }
+      <Text className="uppercase text-base font-bold">{t('To Do')}</Text>
+      {tasks && tasks.map(task => (
+        <TaskEntry
+          key={task.id}
+          task={task}
+          projectId={projectId}
+          categoryId={categoryId}
+          onDelete={(taskId: string) => deleteTaskMutation.mutate(taskId)}
+        />            
+      ))}
+
+      <Separator />
+      <Text className="uppercase text-base font-bold">{t('Completed')}</Text>
+
+      {finishedTasks && finishedTasks.map(task => (
+        <TaskEntry
+          key={task.id}
+          task={task}
+          projectId={projectId}
+          categoryId={categoryId}
+          onDelete={(taskId: string) => deleteTaskMutation.mutate(taskId)}
+        />            
+      ))} 
     </PageWrapper>
   );
 }

@@ -17,7 +17,7 @@ import { Trash2 } from "~/lib/icons/Trash2";
 import { Separator } from "~/components/ui/separator";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { deleteTodo, getTodos, markTodoStatus } from "~/queries/todos";
 import { getTask } from "~/queries/tasks";
 import { z } from "zod";
@@ -76,7 +76,7 @@ function TodoEntry({
         checked={markAsDoneMutation.variables ? !!markAsDoneMutation.variables.checked : !!todo.done}
         onCheckedChange={onTodoDoneChange}
       />
-      <View className="flex flex-col">
+      <View className="flex flex-col max-w-[90%]">
         <Label>{todo.title}</Label>
       </View>
       <Pressable
@@ -107,12 +107,12 @@ export default function TaskPage() {
 
   const queryClient = useQueryClient();
 
-  const { data: task, isLoading: isTaskLoading } = useQuery({
+  const { data: task, isLoading: isTaskLoading } = useSuspenseQuery({
     queryKey: ['tasks', taskId],
     queryFn: () => getTask(db, taskId)
   });
 
-  const { data: todos, isLoading: areTodosLoading } = useQuery({
+  const { data: todos, isLoading: areTodosLoading } = useSuspenseQuery({
     queryKey: ['todos', taskId],
     queryFn: () => getTodos(db, taskId)
   });
@@ -132,72 +132,66 @@ export default function TaskPage() {
         header={task ? task.title : ''}
       />
 
-      {isTaskLoading || areTodosLoading ?
-        <View className="w-full h-full justify-center items-center">
-          <ActivityIndicator size="large" /> 
-        </View>  
-        :
-        <View className="w-full flex flex-col gap-4">
-          {todos &&
-            <View className="flex flex-col gap-2">
-              {todos.filter(todo => todo.id.toString() !== deleteTodoMutation.variables).map(todo => (
-                <TodoEntry
-                  key={todo.id}
-                  todo={todo}
-                  onDelete={() => deleteTodoMutation.mutate(todo.id.toString())}
-                />
-              ))} 
-            </View> 
-          }
-          
-          <TodoForm
-            formType="create"
-            taskId={taskId}
-          />
+      <View className="w-full flex flex-col gap-4">
+        {todos &&
+          <View className="flex flex-col gap-2">
+            {todos.filter(todo => todo.id.toString() !== deleteTodoMutation.variables).map(todo => (
+              <TodoEntry
+                key={todo.id}
+                todo={todo}
+                onDelete={() => deleteTodoMutation.mutate(todo.id.toString())}
+              />
+            ))} 
+          </View> 
+        }
+        
+        <TodoForm
+          formType="create"
+          taskId={taskId}
+        />
 
-          {task ?
-            <>
-              {task.description.trim().length > 0 ?
-                <View className="flex flex-col gap-4">
-                  <Separator
-                    orientation="horizontal"
-                    className="mt-4 mb-2"
-                    style={{backgroundColor: colorOptions.text}} />
-                  <Text className="text-lg font-bold">{t('Description')}</Text>
-                  <Text>{task.description}</Text>
-                </View>
+        {task ?
+          <>
+            {task.description.trim().length > 0 ?
+              <View className="flex flex-col gap-4">
+                <Separator
+                  orientation="horizontal"
+                  className="mt-4 mb-2"
+                  style={{backgroundColor: colorOptions.text}} />
+                <Text className="text-lg font-bold">{t('Description')}</Text>
+                <Text>{task.description}</Text>
+              </View>
+              :
+              null
+            }
+
+            <Separator
+              orientation="horizontal"
+              className="mt-4 mb-2"
+              style={{backgroundColor: colorOptions.text}} />
+
+            <Text className="text-lg font-bold">{t('Information about this task')}</Text>
+
+            <View className="flex flex-col gap-2">
+              <View className="flex flex-row gap-2 flex-wrap">
+                <Text className="font-bold">{t('Full title')}:</Text>
+                <Text>{task.title}</Text>
+              </View> 
+
+              {task.is_until ?
+                <View className="flex flex-row gap-2">
+                  <Text className="font-bold">{t('Until')}:</Text>
+                  <Text>{format(new Date(task.until * 1000), 'do LLL yyyy, HH:mm')}</Text>
+                </View> 
                 :
                 null
               }
-
-              <Separator
-                orientation="horizontal"
-                className="mt-4 mb-2"
-                style={{backgroundColor: colorOptions.text}} />
-
-              <Text className="text-lg font-bold">{t('Information about this task')}</Text>
-
-              <View className="flex flex-col gap-2">
-                <View className="flex flex-row gap-2 flex-wrap">
-                  <Text className="font-bold">{t('Full title')}:</Text>
-                  <Text>{task.title}</Text>
-                </View> 
-
-                {task.is_until ?
-                  <View className="flex flex-row gap-2">
-                    <Text className="font-bold">{t('Until')}:</Text>
-                    <Text>{format(new Date(task.until * 1000), 'do LLL yyyy, HH:mm')}</Text>
-                  </View> 
-                  :
-                  null
-                }
-              </View> 
-            </> 
-            :
-            <Text>{t('Task not found')}</Text>
-          }
-        </View>
-      }
+            </View> 
+          </> 
+          :
+          <Text>{t('Task not found')}</Text>
+        }
+      </View>
     </PageWrapper>
   );
 }
